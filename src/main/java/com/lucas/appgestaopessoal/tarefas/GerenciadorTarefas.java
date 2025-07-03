@@ -3,7 +3,10 @@ package com.lucas.appgestaopessoal.tarefas;
 import com.lucas.appgestaopessoal.util.IdGenerator;
 import com.lucas.appgestaopessoal.util.Prioridade;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.temporal.TemporalAdjuster;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +85,26 @@ public class GerenciadorTarefas {
         return false;
     }
 
+    public List<Tarefa> listarTarefasDaSemana() {
+        List<Tarefa> tarefasDaSemana = new ArrayList<>();
 
+        LocalDate hoje = LocalDate.now();
+        LocalDate inicioDaSemana = hoje.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
+        LocalDate fimDaSemana = inicioDaSemana.plusDays(6);
+
+        System.out.println("--- Tarefas da Semana (De " + inicioDaSemana.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")) +
+                           " a " + fimDaSemana.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")) + ") ---");
+
+        for (Tarefa tarefa : this.tarefas){
+            LocalDate dataVencimento = tarefa.getDataVencimento();
+            if (!dataVencimento.isBefore(inicioDaSemana) && !dataVencimento.isAfter(fimDaSemana)){
+                tarefasDaSemana.add(tarefa);
+            }
+        }
+
+        return tarefasDaSemana;
+
+
+    }
 }
 

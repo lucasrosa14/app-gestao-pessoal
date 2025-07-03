@@ -3,7 +3,10 @@ package com.lucas.appgestaopessoal;
 import com.lucas.appgestaopessoal.tarefas.Tarefa;
 import com.lucas.appgestaopessoal.tarefas.GerenciadorTarefas;
 import com.lucas.appgestaopessoal.util.Prioridade;
+import org.w3c.dom.ls.LSOutput;
 
+import javax.sound.midi.Soundbank;
+import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -121,7 +124,19 @@ public class App {
             }
         }
 
+        System.out.println("\n--- TESTE: Visual da Semana");
+        List<Tarefa> minhasTarefasDaSemana = gerenciador.listarTarefasDaSemana();
+        if (minhasTarefasDaSemana.isEmpty()){
+            System.out.println("Nenhuma tarefa para esta semana!");
+        } else {
+            for (Tarefa t : minhasTarefasDaSemana){
+                System.out.println(t);
+            }
+        }
+
         System.out.println("\nTestes do Módulo de Tarefas Concluídos.");
     }
+
+
 
 }
