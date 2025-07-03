@@ -21,7 +21,12 @@ public class GerenciadorTarefas {
         int novoId = IdGenerator.generateNewId();
         Tarefa tarefa = new Tarefa(novoId, descricao, dataVencimento, prioridade);
         this.tarefas.add(tarefa);
-        System.out.println("Tarefa '" + tarefa.getDescricao() + "' adicionada com sucesso!");
+        System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + tarefa.getId() + "') adicionada com sucesso!");
+    }
+
+    public void adicionarTarefa(Tarefa tarefa) {
+        this.tarefas.add(tarefa);
+        System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + tarefa.getId() + ") adicionada com sucesso!");
     }
 
     public List<Tarefa> listarTarefas() {

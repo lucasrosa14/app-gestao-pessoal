@@ -3,8 +3,11 @@ package com.lucas.appgestaopessoal.tarefas;
 import com.lucas.appgestaopessoal.util.Prioridade;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class Tarefa {
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     private int id;
     private String descricao;
@@ -68,12 +71,14 @@ public class Tarefa {
 
     @Override
     public String toString(){
-        String tarefaFormatada = (  "ID: " + this.getId() +
-                                    ", Descrição: " + this.getDescricao() +
-                                    ", Vencimento: " + this.getDataVencimento() +
-                                    ", Prioridade: " + this.getPrioridade() +
-                                    ", Concluída: " + this.isConcluido());
 
-        return tarefaFormatada;
+        String vencimentoFormatado = (dataVencimento != null) ? dataVencimento.format(DATE_FORMATTER) : "N/A";
+
+        return  "ID: " + this.getId() +
+                                    ", Descrição: " + this.getDescricao() +
+                                    ", Vencimento: " + vencimentoFormatado +
+                                    ", Prioridade: " + this.getPrioridade() +
+                                    ", Concluída: " + this.isConcluido();
+
     }
 }
