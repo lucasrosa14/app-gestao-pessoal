@@ -13,17 +13,19 @@ public class TarefaRecorrente extends Tarefa {
     private FrequenciaRecorrencia frequencia;
     private LocalDate dataInicioRecorrencia;
     private LocalDate dataFimRecorrencia;
-    private LocalDate proximaOcorrencia; // A data da próxima vez que ela deve ser feita
+    private LocalDate proximaOcorrencia;
+    private LocalDate dataPrimeiraOcorrencia;
 
     // Construtor para TarefaRecorrente
-    public TarefaRecorrente(int id, String descricao, LocalDate dataVencimento, Prioridade prioridade,
+    public TarefaRecorrente(int id, String descricao, LocalDate dataVencimentoInicialDigitada, Prioridade prioridade,
                             FrequenciaRecorrencia frequencia, LocalDate dataInicioRecorrencia, LocalDate dataFimRecorrencia) {
-        super(id, descricao, dataVencimento, prioridade, false); // Tarefas recorrentes começam como não concluídas
+        super(id, descricao, dataVencimentoInicialDigitada, prioridade, false); // Tarefas recorrentes começam como não concluídas
 
         this.frequencia = frequencia;
         this.dataInicioRecorrencia = dataInicioRecorrencia;
         this.dataFimRecorrencia = dataFimRecorrencia;
-        this.proximaOcorrencia = dataVencimento; // Inicia com a data de vencimento fornecida
+        this.dataPrimeiraOcorrencia = dataVencimentoInicialDigitada;
+        this.proximaOcorrencia = dataVencimentoInicialDigitada; // Inicia com a data de vencimento fornecida
 
         // **IMPORTANTE:** Garante que a primeira ocorrência esteja no futuro (ou hoje)
         // se a data de vencimento inicial for no passado.
@@ -31,6 +33,10 @@ public class TarefaRecorrente extends Tarefa {
     }
 
     // GETTERS
+    public LocalDate getDataPrimeiraOcorrencia() {
+        return dataPrimeiraOcorrencia;
+    }
+
     public FrequenciaRecorrencia getFrequencia() {
         return frequencia;
     }
@@ -71,6 +77,7 @@ public class TarefaRecorrente extends Tarefa {
      * e, se a data de término não foi atingida, a tarefa é marcada novamente como não concluída
      * para a próxima iteração.
      */
+
     @Override
     public void concluir() {
         super.concluir(); // Marca a ocorrência atual como concluída (Tarefa.concluido = true)
@@ -80,7 +87,7 @@ public class TarefaRecorrente extends Tarefa {
             return;
         }
 
-        // 1. Calcula a próxima data com base na frequência a partir da ocorrência atual
+        // 1. Calcula a próxima ocorrência a partir da atual
         LocalDate proximaOcorrenciaCalculada = this.proximaOcorrencia;
         switch (frequencia) {
             case DIARIA:
@@ -100,19 +107,16 @@ public class TarefaRecorrente extends Tarefa {
                 break;
         }
 
-        // 2. Verifica se a nova ocorrência ultrapassa a data de fim da recorrência
-        if (dataFimRecorrencia != null && proximaOcorrenciaCalculada.isAfter(dataFimRecorrencia)) {
-            // Se ultrapassou, a recorrência terminou.
-            this.proximaOcorrencia = null; // Sinaliza que não há mais ocorrências
-            this.setDataVencimento(null); // Remove a data de vencimento da tarefa pai
-            // A tarefa permanece como concluída (do super.concluir()) para a última ocorrência.
-            return;
+        // 2. Define a data limite inferior: deve ser hoje OU a data de início da recorrência (se esta for futura)
+        LocalDate hoje = LocalDate.now();
+        LocalDate dataLimiteInferior = hoje;
+        if (this.dataInicioRecorrencia != null && this.dataInicioRecorrencia.isAfter(hoje)) {
+            dataLimiteInferior = this.dataInicioRecorrencia;
         }
 
-        // 3. Garante que a próxima ocorrência esteja no futuro (ou hoje)
-        // Isso é para casos onde a tarefa foi concluída com atraso e várias ocorrências já teriam passado.
-        LocalDate hoje = LocalDate.now();
-        while (proximaOcorrenciaCalculada.isBefore(hoje)) {
+        // 3. Avança a próxima ocorrência calculada até que esteja no futuro (ou hoje)
+        // E também que esteja na ou após a data de início da recorrência.
+        while (proximaOcorrenciaCalculada.isBefore(dataLimiteInferior)) {
             switch (frequencia) {
                 case DIARIA:
                     proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusDays(1);
@@ -138,20 +142,28 @@ public class TarefaRecorrente extends Tarefa {
             }
         }
 
-        // 4. Atualiza a próxima ocorrência e o status da tarefa para a nova iteração
+        // 4. Verifica se a nova ocorrência ultrapassa a data de fim da recorrência (após todos os avanços)
+        if (dataFimRecorrencia != null && proximaOcorrenciaCalculada.isAfter(dataFimRecorrencia)) {
+            this.proximaOcorrencia = null; // Sinaliza que não há mais ocorrências
+            this.setDataVencimento(null); // Remove a data de vencimento da tarefa pai
+            return;
+        }
+
+        // 5. Atualiza a próxima ocorrência e o status da tarefa para a nova iteração
         this.proximaOcorrencia = proximaOcorrenciaCalculada;
         this.setDataVencimento(this.proximaOcorrencia); // Atualiza a data de vencimento da tarefa pai
         this.setConcluido(false); // Marca como não concluída para a nova ocorrência
     }
 
-    /**
-     * Método auxiliar para garantir que a proximaOcorrencia esteja no futuro (ou hoje)
-     * quando a tarefa é criada ou carregada.
-     */
     private void ajustarProximaOcorrenciaParaFuturo() {
         LocalDate hoje = LocalDate.now();
-        // Enquanto a próxima ocorrência for anterior a hoje E não tiver passado da data de fim
-        while (this.proximaOcorrencia.isBefore(hoje) &&
+        LocalDate dataLimiteInferior = hoje;
+
+        if (this.dataInicioRecorrencia != null && this.dataInicioRecorrencia.isAfter(hoje)) {
+            dataLimiteInferior = this.dataInicioRecorrencia;
+        }
+
+        while (this.proximaOcorrencia.isBefore(dataLimiteInferior) &&
                 (dataFimRecorrencia == null || !this.proximaOcorrencia.isAfter(dataFimRecorrencia))) {
             // Avança a data conforme a frequência
             switch (frequencia) {
@@ -195,6 +207,9 @@ public class TarefaRecorrente extends Tarefa {
         sb.append(", Prioridade: ").append(super.getPrioridade());
         sb.append(", Concluída: ").append(super.isConcluido());
         sb.append(", Tipo: Recorrente");
+        if (this.dataPrimeiraOcorrencia != null) {
+            sb.append(", Primeira Ocorrência: ").append(this.dataPrimeiraOcorrencia.format(DATE_FORMATTER));
+        }
         sb.append(", Frequência: ").append(this.frequencia);
         sb.append(", Início Recorrência: ").append(this.dataInicioRecorrencia.format(DATE_FORMATTER));
         if (this.dataFimRecorrencia != null) {

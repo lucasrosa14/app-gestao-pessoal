@@ -7,6 +7,7 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class GerenciadorTarefas {
@@ -29,8 +30,20 @@ public class GerenciadorTarefas {
         System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + tarefa.getId() + ") adicionada com sucesso!");
     }
 
-    public List<Tarefa> listarTarefas() {
+    public List<Tarefa> listarTodasTarefas() {
         return new ArrayList<>(this.tarefas);
+    }
+
+    public List<Tarefa> listarTarefasSimples() {
+        return tarefas.stream()
+                .filter(tarefa -> !(tarefa instanceof TarefaRecorrente))
+                .collect(Collectors.toList());
+    }
+
+    public List<Tarefa> listarTarefasRecorrentes() {
+        return tarefas.stream()
+                .filter(tarefa -> tarefa instanceof TarefaRecorrente)
+                .collect(Collectors.toList());
     }
 
     public Tarefa buscarTarefaPorId(int id) {

@@ -66,14 +66,16 @@ public class App {
             System.out.println("1. Adicionar Tarefa");
             System.out.println("2. Adicionar Tarefa Recorrente");
             System.out.println("3. Listar Todas as Tarefas");
-            System.out.println("4. Buscar Tarefa por ID");
-            System.out.println("5. Buscar Tarefas por Texto");
-            System.out.println("6. Concluir Tarefa");
-            System.out.println("7. Remover Tarefa");
-            System.out.println("8. Atualizar Tarefa");
-            System.out.println("9. Visual da Semana");
-            System.out.println("10. Sugerir Tarefa Prioritária");
-            System.out.println("11. Executar Testes Temporários");
+            System.out.println("4. Listar Tarefas Simples");
+            System.out.println("5. Listar Tarefas Recorrentes");
+            System.out.println("6. Buscar Tarefa por ID");
+            System.out.println("7. Buscar Tarefas por Texto");
+            System.out.println("8. Concluir Tarefa");
+            System.out.println("9. Remover Tarefa");
+            System.out.println("10. Atualizar Tarefa");
+            System.out.println("11. Visual da Semana");
+            System.out.println("12. Sugerir Tarefa Prioritária");
+            System.out.println("13. Executar Testes Temporários");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha uma opção para Tarefas: ");
 
@@ -89,30 +91,36 @@ public class App {
                         adicionarTarefaRecorrente(gerenciadorTarefas, scanner);
                         break;
                     case 3:
-                        listarTodasTarefas(gerenciadorTarefas);
+                        listarTarefas(gerenciadorTarefas, scanner, "todas"); // Chamada para listar todas
                         break;
                     case 4:
-                        buscarTarefaPorId(gerenciadorTarefas, scanner);
+                        listarTarefas(gerenciadorTarefas, scanner, "simples"); // Nova chamada para listar simples
                         break;
                     case 5:
-                        buscarTarefasPorTexto(gerenciadorTarefas, scanner);
+                        listarTarefas(gerenciadorTarefas, scanner, "recorrentes"); // Nova chamada para listar recorrentes
                         break;
                     case 6:
-                        concluirTarefa(gerenciadorTarefas, scanner);
+                        buscarTarefaPorId(gerenciadorTarefas, scanner);
                         break;
                     case 7:
-                        removerTarefa(gerenciadorTarefas, scanner);
+                        buscarTarefasPorTexto(gerenciadorTarefas, scanner);
                         break;
                     case 8:
-                        atualizarTarefa(gerenciadorTarefas, scanner);
+                        concluirTarefa(gerenciadorTarefas, scanner);
                         break;
                     case 9:
-                        visualDaSemana(gerenciadorTarefas);
+                        removerTarefa(gerenciadorTarefas, scanner);
                         break;
                     case 10:
-                        sugerirTarefa(gerenciadorTarefas);
+                        atualizarTarefa(gerenciadorTarefas, scanner);
                         break;
                     case 11:
+                        visualDaSemana(gerenciadorTarefas);
+                        break;
+                    case 12:
+                        sugerirTarefa(gerenciadorTarefas);
+                        break;
+                    case 13:
                         executaTestesTemporarios(gerenciadorTarefas);
                         break;
                     case 0:
@@ -233,13 +241,33 @@ public class App {
 
     }
 
-    private static void listarTodasTarefas(GerenciadorTarefas gerenciadorTarefas) {
-        List<Tarefa> tarefas = gerenciadorTarefas.listarTarefas();
-        if (tarefas.isEmpty()) {
-            System.out.println("Nenhuma tarefa cadastrada.");
+    private static void listarTarefas(GerenciadorTarefas gerenciador, Scanner scanner, String tipoLista) {
+        List<? extends Tarefa> listaParaExibir;
+        String tituloLista;
+
+        switch (tipoLista) {
+            case "todas":
+                listaParaExibir = gerenciador.listarTodasTarefas();
+                tituloLista = "Todas as Tarefas";
+                break;
+            case "simples":
+                listaParaExibir = gerenciador.listarTarefasSimples();
+                tituloLista = "Apenas Tarefas Simples";
+                break;
+            case "recorrentes":
+                listaParaExibir = gerenciador.listarTarefasRecorrentes();
+                tituloLista = "Apenas Tarefas Recorrentes";
+                break;
+            default:
+                System.out.println("Tipo de lista inválido.");
+                return;
+        }
+
+        System.out.println("\n--- Lista de " + tituloLista + " ---");
+        if (listaParaExibir.isEmpty()) {
+            System.out.println("Nenhuma tarefa encontrada.");
         } else {
-            System.out.println("\n--- Lista de Todas as Tarefas ---");
-            for (Tarefa tarefa : tarefas) {
+            for (Tarefa tarefa : listaParaExibir) {
                 System.out.println(tarefa);
             }
         }
@@ -280,7 +308,7 @@ public class App {
     }
 
     private static void concluirTarefa(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
-        listarTodasTarefas(gerenciadorTarefas);
+        listarTarefas(gerenciadorTarefas, scanner, "todas");
         System.out.print("Digite o ID da tarefa para concluir: ");
         try {
             int id = scanner.nextInt();
@@ -294,7 +322,7 @@ public class App {
     }
 
     private static void removerTarefa(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
-        listarTodasTarefas(gerenciadorTarefas);
+        listarTarefas(gerenciadorTarefas, scanner, "todas");
         System.out.print("Digite o ID da tarefa para remover: ");
         try {
             int id = scanner.nextInt();
@@ -308,7 +336,7 @@ public class App {
     }
 
     private static void atualizarTarefa(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
-        listarTodasTarefas(gerenciadorTarefas);
+        listarTarefas(gerenciadorTarefas, scanner, "todas");
         System.out.print("Digite o ID da tarefa que deseja atualizar: ");
         try {
             int id = scanner.nextInt();
@@ -399,7 +427,7 @@ public class App {
         gerenciadorTarefas.adicionarTarefa("Pagar contas da casa", LocalDate.of(2025, 7, 4), Prioridade.URGENTE);
 
         System.out.println("\n--- Listando todas as Tarefas ---");
-        List<Tarefa> todasAsTarefas = gerenciadorTarefas.listarTarefas();
+        List<Tarefa> todasAsTarefas = gerenciadorTarefas.listarTodasTarefas();
         if (todasAsTarefas.isEmpty()) {
             System.out.println("Nenhuma tarefa encontrada.");
         } else {
@@ -462,7 +490,7 @@ public class App {
         }
 
         System.out.println("\n--- Listando Tarefas Após Marcar Concluída ---");
-        for (Tarefa t : gerenciadorTarefas.listarTarefas()) {
+        for (Tarefa t : gerenciadorTarefas.listarTodasTarefas()) {
             System.out.println("ID: " + t.getId() +
                     ", Descrição: " + t.getDescricao() +
                     ", Concluída: " + t.isConcluido());
@@ -473,7 +501,7 @@ public class App {
         gerenciadorTarefas.atualizarTarefa(tarefaAtualizada);
 
         System.out.println("\n--- Listando Tarefas Após Atualização ---");
-        for (Tarefa t : gerenciadorTarefas.listarTarefas()) {
+        for (Tarefa t : gerenciadorTarefas.listarTodasTarefas()) {
             System.out.println("ID: " + t.getId() +
                     ", Descrição: " + t.getDescricao() +
                     ", Vencimento: " + t.getDataVencimento() +
@@ -488,7 +516,7 @@ public class App {
         gerenciadorTarefas.removerTarefa(100);
 
         System.out.println("\n--- Listando Tarefas Finais ---");
-        todasAsTarefas = gerenciadorTarefas.listarTarefas();
+        todasAsTarefas = gerenciadorTarefas.listarTodasTarefas();
         if (todasAsTarefas.isEmpty()) {
             System.out.println("Nenhuma tarefa restante.");
         } else {
