@@ -1,8 +1,8 @@
 package com.lucas.appgestaopessoal.util;
 
 public enum Prioridade {
-    BAIXA,
-    MEDIA,
+    URGENTE,
     ALTA,
-    URGENTE
+    MEDIA,
+    BAIXA
 }

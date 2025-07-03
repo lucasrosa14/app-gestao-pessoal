@@ -9,6 +9,7 @@ import javax.sound.midi.Soundbank;
 import java.sql.SQLOutput;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public class App {
 
@@ -23,6 +24,7 @@ public class App {
         gerenciador.adicionarTarefa("Pagar contas da casa", LocalDate.of(2025, 7, 5), Prioridade.URGENTE);
         gerenciador.adicionarTarefa("Estudar Java por 1 hora", LocalDate.of(2025, 7, 2), Prioridade.MEDIA);
         gerenciador.adicionarTarefa("Responder e-mails pendentes", LocalDate.of(2025, 7, 4), Prioridade.BAIXA);
+        gerenciador.adicionarTarefa("Pagar contas da casa", LocalDate.of(2025, 7, 4), Prioridade.URGENTE);
 
         System.out.println("\n--- Listando todas as Tarefas ---");
         List<Tarefa> todasAsTarefas = gerenciador.listarTarefas();
@@ -134,9 +136,19 @@ public class App {
             }
         }
 
+
+        System.out.println("\n---  Teste: Sugestão de Tarefa Prioritária ---");
+        Optional<Tarefa> tarefaSugerida = gerenciador.sugerirTarefaPrioritaria();
+
+        if (tarefaSugerida.isPresent()){
+            System.out.println("Sua próxima tarefa prioritária sugerida é:");
+            System.out.println(tarefaSugerida.get());
+        } else {
+            System.out.println("Não há tarefas pendentes para sugerir no momento");
+        }
+
         System.out.println("\nTestes do Módulo de Tarefas Concluídos.");
+
+
     }
-
-
-
 }
