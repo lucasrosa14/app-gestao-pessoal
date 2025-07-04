@@ -3,12 +3,15 @@ package com.lucas.appgestaopessoal.tarefas;
 import com.lucas.appgestaopessoal.util.IdGenerator;
 import com.lucas.appgestaopessoal.util.Prioridade;
 import com.lucas.appgestaopessoal.util.StatusTarefa;
+import static com.lucas.appgestaopessoal.util.NormalizeTexto.normalizeText;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
+
+
 
 
 public class GerenciadorTarefas {
@@ -19,16 +22,18 @@ public class GerenciadorTarefas {
         this.tarefas = new ArrayList<>();
     }
 
-    public void adicionarTarefa(String descricao, LocalDate dataVencimento, Prioridade prioridade) {
+    public Tarefa adicionarTarefa(String descricao, LocalDate dataVencimento, Prioridade prioridade) {
         int id = IdGenerator.generateNewId();
         Tarefa tarefa = new Tarefa(id, descricao, dataVencimento, prioridade, StatusTarefa.PENDENTE, LocalDate.now());
         this.tarefas.add(tarefa);
         System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + tarefa.getId() + "') adicionada com sucesso!");
+        return tarefa;
     }
 
-    public void adicionarTarefa(Tarefa tarefa) {
+    public Tarefa adicionarTarefa(Tarefa tarefa) {
         this.tarefas.add(tarefa);
         System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + tarefa.getId() + ") adicionada com sucesso!");
+        return tarefa;
     }
 
     public List<Tarefa> listarTodasTarefas() {
@@ -47,6 +52,40 @@ public class GerenciadorTarefas {
                 .collect(Collectors.toList());
     }
 
+    public List<Tarefa> listarTarefasPendentes() {
+        return tarefas.stream()
+                .filter(tarefa -> tarefa.getStatus() == StatusTarefa.PENDENTE)
+                .collect(Collectors.toList());
+    }
+
+    public List<Tarefa> listarTarefasConcluidas() {
+        return tarefas.stream()
+                .filter(tarefa -> tarefa.getStatus() == StatusTarefa.CONCLUIDA)
+                .collect(Collectors.toList());
+    }
+
+    public List<Tarefa> listarTarefasCanceladas() {
+        return tarefas.stream()
+                .filter(tarefa -> tarefa.getStatus() == StatusTarefa.CANCELADA)
+                .collect(Collectors.toList());
+    }
+
+    public List<Tarefa> listarTarefasOrdenadasPorVencimento() {
+        return tarefas.stream()
+                .sorted(Comparator
+                        .comparing(Tarefa::getDataVencimento, Comparator.reverseOrder())
+                )
+                .collect(Collectors.toList());
+    }
+
+    public List<Tarefa> listarTarefasOrdenadasPorPrioridade() {
+        return tarefas.stream()
+                .sorted(Comparator
+                        .comparing(Tarefa::getPrioridade)
+                )
+                .collect(Collectors.toList());
+    }
+
     public Tarefa buscarTarefaPorId(int id) {
         for (Tarefa tarefa : this.tarefas) {
             if (tarefa.getId() == id) {
@@ -57,15 +96,11 @@ public class GerenciadorTarefas {
     }
 
     public List<Tarefa> buscarTarefaPorTexto(String textoBusca) {
-        List<Tarefa> tarefasEncontradas = new ArrayList<>();
-        String textoBuscaLowerCase = textoBusca.toLowerCase();
+        String textoBuscaNormalizado = normalizeText(textoBusca);
 
-        for (Tarefa tarefa : this.tarefas) {
-            if (tarefa.getDescricao().toLowerCase().contains(textoBuscaLowerCase)) {
-                tarefasEncontradas.add(tarefa);
-            }
-        }
-        return tarefasEncontradas;
+        return tarefas.stream()
+                .filter(tarefa -> normalizeText(tarefa.getDescricao()).toLowerCase().contains(textoBuscaNormalizado))
+                .collect(Collectors.toList());
     }
 
     public boolean removerTarefa(int id) {

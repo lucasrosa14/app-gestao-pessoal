@@ -18,23 +18,17 @@ public class TarefaRecorrente extends Tarefa {
     private LocalDate dataPrimeiraOcorrencia;
 
     // Construtor para TarefaRecorrente
-    public TarefaRecorrente(int id, String descricao, LocalDate dataVencimentoInicialDigitada, Prioridade prioridade,
-                            FrequenciaRecorrencia frequencia, LocalDate dataInicioRecorrencia, LocalDate dataFimRecorrencia) {
-        super(id, descricao, dataVencimentoInicialDigitada, prioridade, StatusTarefa.PENDENTE, LocalDate.now()); // Tarefas recorrentes começam como não concluídas
-
+    public TarefaRecorrente(int id, String descricao, LocalDate primeiraOcorrenciaBase, Prioridade prioridade, FrequenciaRecorrencia frequencia, LocalDate dataInicioRecorrencia, LocalDate dataFimRecorrencia) {
+        super(id, descricao, primeiraOcorrenciaBase, prioridade, StatusTarefa.PENDENTE, LocalDate.now()); // Chamada ao construtor de Tarefa.
         this.frequencia = frequencia;
         this.dataInicioRecorrencia = dataInicioRecorrencia;
         this.dataFimRecorrencia = dataFimRecorrencia;
-        this.dataPrimeiraOcorrencia = dataVencimentoInicialDigitada;
-        this.proximaOcorrencia = dataVencimentoInicialDigitada; // Inicia com a data de vencimento fornecida
-
-        // **IMPORTANTE:** Garante que a primeira ocorrência esteja no futuro (ou hoje)
-        // se a data de vencimento inicial for no passado.
-        ajustarProximaOcorrenciaParaFuturo();
+        this.dataPrimeiraOcorrencia = primeiraOcorrenciaBase; // Garanta que este campo é definido
+        calcularProximaOcorrencia(); // Deve recalcular a próxima ocorrência
     }
 
     // GETTERS
-    public LocalDate getDataPrimeiraOcorrencia() {
+    public LocalDate getPrimeiraOcorrencia() {
         return dataPrimeiraOcorrencia;
     }
 
@@ -55,20 +49,99 @@ public class TarefaRecorrente extends Tarefa {
     }
 
     // SETTERS (se forem realmente necessários para modificar a recorrência em tempo de execução)
+    @Override // Use @Override se você sobrescrever setStatus, setDescricao, setPrioridade
+    public void setDescricao(String descricao) {
+        super.setDescricao(descricao); // Chama o setter da classe pai
+    }
+
+    @Override
+    public void setPrioridade(Prioridade prioridade) {
+        super.setPrioridade(prioridade); // Chama o setter da classe pai
+    }
+
+    @Override
+    public void setStatus(StatusTarefa status) {
+        super.setStatus(status); // Chama o setter da classe pai
+    }
+
     public void setFrequencia(FrequenciaRecorrencia frequencia) {
         this.frequencia = frequencia;
+        calcularProximaOcorrencia();
     }
 
     public void setDataInicioRecorrencia(LocalDate dataInicioRecorrencia) {
         this.dataInicioRecorrencia = dataInicioRecorrencia;
+        calcularProximaOcorrencia();
     }
 
     public void setDataFimRecorrencia(LocalDate dataFimRecorrencia) {
         this.dataFimRecorrencia = dataFimRecorrencia;
+        calcularProximaOcorrencia();
     }
 
-    public void setProximaOcorrencia(LocalDate proximaOcorrencia) {
-        this.proximaOcorrencia = proximaOcorrencia;
+    public void setPrimeiraOcorrencia(LocalDate primeiraOcorrencia) {
+        this.dataPrimeiraOcorrencia = primeiraOcorrencia;
+        calcularProximaOcorrencia();
+    }
+
+    private void calcularProximaOcorrencia() {
+        LocalDate hoje = LocalDate.now();
+
+
+        LocalDate dataParaCalcular = dataInicioRecorrencia != null ? dataInicioRecorrencia : dataPrimeiraOcorrencia;
+
+
+        if (dataParaCalcular.isBefore(hoje)) {
+            dataParaCalcular = hoje;
+        }
+
+        LocalDate proximaOcorrenciaEncontrada = null;
+        LocalDate tempDate = dataPrimeiraOcorrencia;
+
+
+        while (proximaOcorrenciaEncontrada == null) {
+
+            if (dataFimRecorrencia != null && tempDate.isAfter(dataFimRecorrencia)) {
+                break;
+            }
+
+
+            if (!tempDate.isBefore(hoje)) {
+                proximaOcorrenciaEncontrada = tempDate;
+                break;
+            }
+
+
+            switch (frequencia) {
+                case DIARIA:
+                    tempDate = tempDate.plusDays(1);
+                    break;
+                case SEMANAL:
+                    tempDate = tempDate.plusWeeks(1);
+                    break;
+                case QUINZENAL:
+                    tempDate = tempDate.plusDays(15);
+                    break;
+                case MENSAL:
+                    tempDate = tempDate.plusMonths(1);
+                    break;
+                case ANUAL:
+                    tempDate = tempDate.plusYears(1);
+                    break;
+            }
+        }
+
+
+        super.setDataVencimento(proximaOcorrenciaEncontrada);
+
+
+        if (getStatus() != StatusTarefa.CANCELADA) {
+            if (proximaOcorrenciaEncontrada == null) {
+                super.setStatus(StatusTarefa.CONCLUIDA);
+            } else {
+                super.setStatus(StatusTarefa.PENDENTE);
+            }
+        }
     }
 
     @Override
@@ -151,64 +224,28 @@ public class TarefaRecorrente extends Tarefa {
         this.setStatus(StatusTarefa.PENDENTE); // Marca como não concluída para a nova ocorrência
     }
 
-    private void ajustarProximaOcorrenciaParaFuturo() {
-        LocalDate hoje = LocalDate.now();
-        LocalDate dataLimiteInferior = hoje;
-
-        if (this.dataInicioRecorrencia != null && this.dataInicioRecorrencia.isAfter(hoje)) {
-            dataLimiteInferior = this.dataInicioRecorrencia;
-        }
-
-        while (this.proximaOcorrencia.isBefore(dataLimiteInferior) &&
-                (dataFimRecorrencia == null || !this.proximaOcorrencia.isAfter(dataFimRecorrencia))) {
-            // Avança a data conforme a frequência
-            switch (frequencia) {
-                case DIARIA:
-                    this.proximaOcorrencia = this.proximaOcorrencia.plusDays(1);
-                    break;
-                case SEMANAL:
-                    this.proximaOcorrencia = this.proximaOcorrencia.plusWeeks(1);
-                    break;
-                case QUINZENAL:
-                    this.proximaOcorrencia = this.proximaOcorrencia.plusWeeks(2);
-                    break;
-                case MENSAL:
-                    this.proximaOcorrencia = this.proximaOcorrencia.plusMonths(1);
-                    break;
-                case ANUAL:
-                    this.proximaOcorrencia = this.proximaOcorrencia.plusYears(1);
-                    break;
-            }
-        }
-        // Após o loop, se a data ainda for após a dataFimRecorrencia, significa que a recorrência já terminou
-        if (dataFimRecorrencia != null && this.proximaOcorrencia.isAfter(dataFimRecorrencia)) {
-            this.proximaOcorrencia = null;
-            this.setDataVencimento(null);
-        } else {
-            // Atualiza a data de vencimento da tarefa pai para a próxima ocorrência
-            this.setDataVencimento(this.proximaOcorrencia);
-        }
-    }
-
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(super.toString());
-        sb.append(", Tipo: Recorrente");
-        sb.append(", Frequência: ").append(this.frequencia);
-        if (this.dataPrimeiraOcorrencia != null) {
-            sb.append(", Primeira Ocorrência: ").append(this.dataPrimeiraOcorrencia.format(DATE_FORMATTER));
+        // Usa o StringBuilder para construir a string de forma eficiente
+        StringBuilder sb = new StringBuilder();
+        sb.append("ID: ").append(getId());
+        sb.append(", Descrição: ").append(getDescricao());
+        sb.append(", Prioridade: ").append(getPrioridade());
+        sb.append(", Status: ").append(getStatus());
+        sb.append(", Cadastrada em: ").append(getDataCriacao().format(DATE_FORMATTER));
+        sb.append(", Frequência: ").append(frequencia);
+        sb.append(", Início Recorrência: ").append(dataInicioRecorrencia != null ? dataInicioRecorrencia.format(DATE_FORMATTER) : "N/A");
+        sb.append(", Primeira Ocorrência: ").append(dataPrimeiraOcorrencia.format(DATE_FORMATTER));
+        sb.append(", Fim Recorrência: ").append(dataFimRecorrencia != null ? dataFimRecorrencia.format(DATE_FORMATTER) : "N/A");
+
+        // Exibe a próxima ocorrência (que é o dataVencimento herdado)
+        if (getDataVencimento() != null) { // getDataVencimento() aqui é a próxima ocorrência calculada
+            sb.append(", Próxima Ocorrência: ").append(getDataVencimento().format(DATE_FORMATTER));
+        } else {
+            // Se getDataVencimento for null, significa que não há mais ocorrências
+            sb.append(", Próxima Ocorrência: FINALIZADA");
         }
 
-        sb.append(", Início Recorrência: ").append(this.dataInicioRecorrencia.format(DATE_FORMATTER));
-        if (this.dataFimRecorrencia != null) {
-            sb.append(", Fim Recorrência: ").append(this.dataFimRecorrencia.format(DATE_FORMATTER));
-        }
-        sb.append(", Próxima Ocorrência: ");
-        if (this.proximaOcorrencia != null) {
-            sb.append(this.proximaOcorrencia.format(DATE_FORMATTER));
-        } else {
-            sb.append("FINALIZADA"); // Mensagem clara quando a recorrência termina
-        }
         return sb.toString();
     }
 }

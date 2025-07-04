@@ -58,10 +58,6 @@ public class Tarefa {
         return this.status == StatusTarefa.CONCLUIDA;
     }
 
-    public void concluir(){
-        this.status = StatusTarefa.CONCLUIDA;
-    }
-
     public void setPrioridade(Prioridade novaPrioridade){
         this.prioridade = novaPrioridade;
 
@@ -77,6 +73,14 @@ public class Tarefa {
 
     public void setDataCriacao(LocalDate dataCriacao) {
         this.dataCriacao = dataCriacao;
+    }
+
+    public void concluir(){
+        this.status = StatusTarefa.CONCLUIDA;
+    }
+
+    public void cancelar() {
+        this.status = StatusTarefa.CANCELADA;
     }
 
     @Override

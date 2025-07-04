@@ -69,14 +69,18 @@ public class App {
             System.out.println("3. Listar Todas as Tarefas");
             System.out.println("4. Listar Tarefas Simples");
             System.out.println("5. Listar Tarefas Recorrentes");
-            System.out.println("6. Buscar Tarefa por ID");
-            System.out.println("7. Buscar Tarefas por Texto");
-            System.out.println("8. Concluir Tarefa");
-            System.out.println("9. Remover Tarefa");
-            System.out.println("10. Atualizar Tarefa");
-            System.out.println("11. Visual da Semana");
-            System.out.println("12. Sugerir Tarefa Prioritária");
-            System.out.println("13. Executar Testes Temporários");
+            System.out.println("6. Listar Tarefas Pendentes");
+            System.out.println("7. Listar Tarefas Concluídas");
+            System.out.println("8. Listar Tarefas Canceladas");
+            System.out.println("9. Listar Tarefas por Prioridade");
+            System.out.println("10. Listar Tarefas por Vencimento");
+            System.out.println("11. Buscar Tarefa por ID");
+            System.out.println("12. Buscar Tarefas por Texto");
+            System.out.println("13. Concluir/Cancelar Tarefa");
+            System.out.println("14. Excluir Tarefa");
+            System.out.println("15. Atualizar Tarefa");
+            System.out.println("16. Visual da Semana");
+            System.out.println("17. Sugerir Tarefa Prioritária");
             System.out.println("0. Voltar ao Menu Principal");
             System.out.print("Escolha uma opção para Tarefas: ");
 
@@ -101,28 +105,40 @@ public class App {
                         listarTarefas(gerenciadorTarefas, scanner, "recorrentes"); // Nova chamada para listar recorrentes
                         break;
                     case 6:
-                        buscarTarefaPorId(gerenciadorTarefas, scanner);
+                        listarTarefas(gerenciadorTarefas, scanner, "pendentes");
                         break;
                     case 7:
-                        buscarTarefasPorTexto(gerenciadorTarefas, scanner);
+                        listarTarefas(gerenciadorTarefas, scanner, "concluidas");
                         break;
                     case 8:
-                        concluirTarefa(gerenciadorTarefas, scanner);
+                        listarTarefas(gerenciadorTarefas, scanner, "canceladas");
                         break;
                     case 9:
-                        removerTarefa(gerenciadorTarefas, scanner);
+                        listarTarefasPorPrioridade(gerenciadorTarefas, scanner);
                         break;
                     case 10:
-                        atualizarTarefa(gerenciadorTarefas, scanner);
+                        listarTarefasPorVencimento(gerenciadorTarefas, scanner);
                         break;
                     case 11:
-                        visualDaSemana(gerenciadorTarefas);
+                        buscarTarefaPorId(gerenciadorTarefas, scanner);
                         break;
                     case 12:
-                        sugerirTarefa(gerenciadorTarefas);
+                        buscarTarefasPorTexto(gerenciadorTarefas, scanner);
                         break;
                     case 13:
-                        executaTestesTemporarios(gerenciadorTarefas);
+                        concluirOuCancelarTarefa(gerenciadorTarefas, scanner);
+                        break;
+                    case 14:
+                        removerTarefa(gerenciadorTarefas, scanner);
+                        break;
+                    case 15:
+                        atualizarTarefa(gerenciadorTarefas, scanner);
+                        break;
+                    case 16:
+                        visualDaSemana(gerenciadorTarefas);
+                        break;
+                    case 17:
+                        sugerirTarefa(gerenciadorTarefas);
                         break;
                     case 0:
                         System.out.println("Voltando ao Menu Principal...");
@@ -140,22 +156,28 @@ public class App {
         } while (opcaoTarefas != 0);
     }
 
-    private static void adicionarTarefaSimples(GerenciadorTarefas gerenciador, Scanner scanner) {
+    private static void adicionarTarefaSimples(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
         System.out.print("Digite a descrição da tarefa simples: ");
         String descricao = scanner.nextLine();
 
-        System.out.print("Digite a data de vencimento (DD-MM-AAAA): ");
+        System.out.print("Digite a data de vencimento (DD-MM-AAAA) [Pressione ENTER para data atual]: ");
         String dataStr = scanner.nextLine();
         LocalDate dataVencimento;
-        try {
-            dataVencimento = LocalDate.parse(dataStr, DATE_FORMATTER);
-            if (!dataVencimento.isAfter(LocalDate.now().minusDays(1))) {
-                System.out.println("A data de vencimento não pode ser anterior ao dia de hoje. Tarefa não adicionada.");
+
+        if (dataStr.isBlank()) { // Se a string da data estiver vazia (usuário apertou Enter)
+            dataVencimento = LocalDate.now(); // Define a data de vencimento como o dia atual
+            System.out.println("Data de vencimento definida para HOJE: " + dataVencimento.format(DATE_FORMATTER));
+        } else {
+            try {
+                dataVencimento = LocalDate.parse(dataStr, DATE_FORMATTER);
+                if (!dataVencimento.isAfter(LocalDate.now().minusDays(1))) {
+                    System.out.println("A data de vencimento não pode ser anterior ao dia de hoje. Tarefa não adicionada.");
+                    return;
+                }
+            } catch (DateTimeParseException e) {
+                System.out.println("Formato de data inválido. Use DD-MM-AAAA. Tarefa não adicionada.");
                 return;
             }
-        } catch (DateTimeParseException e) {
-            System.out.println("Formato de data inválido. Use DD-MM-AAAA. Tarefa não adicionada.");
-            return;
         }
 
         System.out.print("Digite a prioridade (BAIXA, MEDIA, ALTA, URGENTE): ");
@@ -168,14 +190,14 @@ public class App {
             return;
         }
 
-        gerenciador.adicionarTarefa(descricao, dataVencimento, prioridade);
+        gerenciadorTarefas.adicionarTarefa(descricao, dataVencimento, prioridade);
     }
 
-    private static void adicionarTarefaRecorrente(GerenciadorTarefas gerenciador, Scanner scanner) {
+    private static void adicionarTarefaRecorrente(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
         System.out.print("Digite a descrição da tarefa recorrente: ");
         String descricao = scanner.nextLine();
 
-        System.out.print("Digite a data da PRIMEIRA ocorrência (vencimento inicial) (DD-MM-AAAA): ");
+        System.out.print("Digite a data da PRIMEIRA ocorrência (DD-MM-AAAA): ");
         String dataVencimentoStr = scanner.nextLine();
         LocalDate dataVencimento;
         try {
@@ -238,26 +260,38 @@ public class App {
                 frequencia, dataInicioRecorrencia, dataFimRecorrencia
         );
 
-        gerenciador.adicionarTarefa(novaTarefaRecorrente);
+        gerenciadorTarefas.adicionarTarefa(novaTarefaRecorrente);
 
     }
 
-    private static void listarTarefas(GerenciadorTarefas gerenciador, Scanner scanner, String tipoLista) {
+    private static void listarTarefas(GerenciadorTarefas gerenciadorTarefas, Scanner scanner, String tipoLista) {
         List<? extends Tarefa> listaParaExibir;
         String tituloLista;
 
         switch (tipoLista) {
             case "todas":
-                listaParaExibir = gerenciador.listarTodasTarefas();
+                listaParaExibir = gerenciadorTarefas.listarTodasTarefas();
                 tituloLista = "Todas as Tarefas";
                 break;
             case "simples":
-                listaParaExibir = gerenciador.listarTarefasSimples();
+                listaParaExibir = gerenciadorTarefas.listarTarefasSimples();
                 tituloLista = "Apenas Tarefas Simples";
                 break;
             case "recorrentes":
-                listaParaExibir = gerenciador.listarTarefasRecorrentes();
+                listaParaExibir = gerenciadorTarefas.listarTarefasRecorrentes();
                 tituloLista = "Apenas Tarefas Recorrentes";
+                break;
+            case "pendentes":
+                listaParaExibir = gerenciadorTarefas.listarTarefasPendentes();
+                tituloLista = "Apenas Tarefas Pendentes";
+                break;
+            case "concluidas":
+                listaParaExibir = gerenciadorTarefas.listarTarefasConcluidas();
+                tituloLista = "Apenas Tarefas Concluídas";
+                break;
+            case "canceladas":
+                listaParaExibir = gerenciadorTarefas.listarTarefasCanceladas();
+                tituloLista = "Apenas Tarefas Canceladas";
                 break;
             default:
                 System.out.println("Tipo de lista inválido.");
@@ -271,6 +305,28 @@ public class App {
             for (Tarefa tarefa : listaParaExibir) {
                 System.out.println(tarefa);
             }
+        }
+    }
+
+    private static void listarTarefasPorVencimento(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
+        System.out.println("\n--- Tarefas Ordenadas por Vencimento ---");
+        List<Tarefa> tarefasOrdenadas = gerenciadorTarefas.listarTarefasOrdenadasPorVencimento();
+
+        if (tarefasOrdenadas.isEmpty()) {
+            System.out.println("Nenhuma tarefa encontrada.");
+        } else {
+            tarefasOrdenadas.forEach(System.out::println);
+        }
+    }
+
+    private static void listarTarefasPorPrioridade(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
+        System.out.println("\n--- Tarefas Ordenadas por Prioridade ---");
+        List<Tarefa> tarefasOrdenadas = gerenciadorTarefas.listarTarefasOrdenadasPorPrioridade();
+
+        if (tarefasOrdenadas.isEmpty()) {
+            System.out.println("Nenhuma tarefa encontrada.");
+        } else {
+            tarefasOrdenadas.forEach(System.out::println);
         }
     }
 
@@ -308,15 +364,69 @@ public class App {
         }
     }
 
-    private static void concluirTarefa(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
+    private static void concluirOuCancelarTarefa(GerenciadorTarefas gerenciadorTarefas, Scanner scanner) {
         listarTarefas(gerenciadorTarefas, scanner, "todas");
-        System.out.print("Digite o ID da tarefa para concluir: ");
+        System.out.print("Digite o ID da tarefa para concluir/cancelar: ");
         try {
             int id = scanner.nextInt();
             scanner.nextLine();
 
-            gerenciadorTarefas.concluirTarefa(id);
-        } catch (InputMismatchException e) {
+            Tarefa tarefa = gerenciadorTarefas.buscarTarefaPorId(id);
+            if (tarefa == null) {
+                System.out.println("Tarefa com ID " + id + " não encontrada.");
+                return;
+            }
+            System.out.println("Tarefa selecioda: " + tarefa.getDescricao() + " (Status atual: " + tarefa.getStatus() + ")");
+            System.out.print("Deseja (C)oncluir ou (X)Cancelar esta tarefa? (C/X): ");
+            String acao = scanner.nextLine().trim().toUpperCase();
+
+            if ("C".equals(acao)) {
+                if (tarefa.getStatus() == StatusTarefa.CONCLUIDA) {
+                    System.out.println("Tarefa já está CONCLUÍDA.");
+                } else {
+                    if (tarefa.getStatus() == StatusTarefa.CANCELADA) {
+                        System.out.print("Tarefa '" + tarefa.getDescricao() + "' (ID: " + id + ") está com status CANCELADA. Deseja alterar o status para CONCLUIDA? (S/N): ");
+                        String confirma = scanner.nextLine().trim().toUpperCase();
+                        if ("S".equals(confirma)) {
+                            tarefa.concluir();
+                            System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + id + ") marcada como CONCLUÍDA.");
+                        } else if ("N".equals(confirma)) {
+                            System.out.println("Status da tarafa '" + tarefa.getDescricao() + "' (ID: " + id + ") não foi alterado.");
+                        } else {
+                            System.out.println("Opção inválida. Nenhuma ação realizada.");
+                        }
+                    } else {
+                        tarefa.concluir();
+                        System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + id + ") marcada como CONCLUÍDA.");
+
+                    }
+                }
+            } else if ("X".equals(acao)) {
+                if (tarefa.getStatus() == StatusTarefa.CANCELADA) {
+                    System.out.println("Tarefa já está CANCELADA.");
+                } else {
+                    if (tarefa.getStatus() == StatusTarefa.CONCLUIDA) {
+                        System.out.print("Tarefa '" + tarefa.getDescricao() + "' (ID: " + id + ") está com status CONCLUIDA. Deseja alterar o status para CANCELADA? (S/N): ");
+                        String confirma = scanner.nextLine().trim().toUpperCase();
+                        if ("S".equals(confirma)) {
+                            tarefa.cancelar();
+                            System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + id + ") marcada como CANCELADA.");
+                        } else if ("N".equals(confirma)) {
+                            System.out.println("Status da tarafa '" + tarefa.getDescricao() + "' (ID: " + id + ") não foi alterado.");
+                        } else {
+                            System.out.println("Opção inválida. Nenhuma ação realizada.");
+                        }
+                    } else {
+                        tarefa.cancelar();
+                        System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + id + ") marcada como CANCELADA.");
+                    }
+                }
+            } else {
+                System.out.println("Opção inválida. Nenhuma ação realizada.");
+            }
+
+        } catch (
+                InputMismatchException e) {
             System.out.println("ID inválido. Por favor, digite um número inteiro.");
             scanner.nextLine();
         }
@@ -349,21 +459,10 @@ public class App {
                 return;
             }
 
+
             System.out.print("Digite a NOVA descrição da tarefa (atual: " + tarefaExistente.getDescricao() + ") [Pressione Enter para manter]: ");
             String novaDescricaoInput = scanner.nextLine();
             String novaDescricao = novaDescricaoInput.isBlank() ? tarefaExistente.getDescricao() : novaDescricaoInput;
-
-            System.out.print("Digite a NOVA data de vencimento (DD-MM-AAAA) (atual: " + tarefaExistente.getDataVencimento() + ") [Pressione Enter para manter]: ");
-            String novaDataStrInput = scanner.nextLine();
-            LocalDate novaDataVencimento = tarefaExistente.getDataVencimento();
-            if (!novaDataStrInput.isBlank()) {
-                try {
-                    novaDataVencimento = LocalDate.parse(novaDataStrInput, DATE_FORMATTER);
-                } catch (DateTimeParseException e) {
-                    System.out.println("Formato de data inválido. Use DD-MM-AAAA. Data de vencimento NÃO atualizada.");
-
-                }
-            }
 
             System.out.print("Digite a NOVA prioridade (BAIXA, MEDIA, ALTA, URGENTE) (atual: " + tarefaExistente.getPrioridade() + ") [Pressione Enter para manter]: ");
             String novaPrioridadeStrInput = scanner.nextLine().toUpperCase();
@@ -376,8 +475,86 @@ public class App {
                 }
             }
 
-            StatusTarefa novoStatus = tarefaExistente.getStatus();
-            if (!(tarefaExistente instanceof TarefaRecorrente)) { // Tarefas recorrentes têm status dinâmico via concluir()
+
+            if (tarefaExistente instanceof TarefaRecorrente) {
+                TarefaRecorrente trExistente = (TarefaRecorrente) tarefaExistente;
+
+
+                trExistente.setDescricao(novaDescricao);
+                trExistente.setPrioridade(novaPrioridade);
+
+
+                System.out.print("Digite a NOVA frequência (DIARIA, SEMANAL, QUINZENAL, MENSAL, ANUAL) (atual: " + trExistente.getFrequencia() + ") [Pressione Enter para manter]: ");
+                String novaFrequenciaStr = scanner.nextLine().toUpperCase();
+                if (!novaFrequenciaStr.isBlank()) {
+                    try {
+                        trExistente.setFrequencia(FrequenciaRecorrencia.valueOf(novaFrequenciaStr));
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("Frequência inválida. Frequência NÃO atualizada.");
+                    }
+                }
+
+                System.out.print("Digite a NOVA data da PRIMEIRA OCORRÊNCIA (DD-MM-AAAA) (atual: " + trExistente.getPrimeiraOcorrencia().format(DATE_FORMATTER) + ") [Pressione Enter para manter]: ");
+                String novaPrimeiraOcorrenciaStr = scanner.nextLine();
+                if (!novaPrimeiraOcorrenciaStr.isBlank()) {
+                    try {
+                        LocalDate novaPrimeiraOcorrencia = LocalDate.parse(novaPrimeiraOcorrenciaStr, DATE_FORMATTER);
+                        trExistente.setPrimeiraOcorrencia(novaPrimeiraOcorrencia);
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Formato de data inválido. Primeira Ocorrência NÃO atualizada.");
+                    }
+                }
+
+                System.out.print("Digite a NOVA data de INÍCIO da recorrência (DD-MM-AAAA) (atual: " + (trExistente.getDataInicioRecorrencia() != null ? trExistente.getDataInicioRecorrencia().format(DATE_FORMATTER) : "N/A") + ") [Pressione Enter para manter]: ");
+                String novaDataInicioRecorrenciaStr = scanner.nextLine();
+                if (!novaDataInicioRecorrenciaStr.isBlank()) {
+                    try {
+                        LocalDate novaDataInicioRecorrencia = LocalDate.parse(novaDataInicioRecorrenciaStr, DATE_FORMATTER);
+                        trExistente.setDataInicioRecorrencia(novaDataInicioRecorrencia);
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Formato de data inválido. Data de Início da Recorrência NÃO atualizada.");
+                    }
+                }
+
+                System.out.print("Digite a NOVA data de FIM da recorrência (DD-MM-AAAA) (atual: " + (trExistente.getDataFimRecorrencia() != null ? trExistente.getDataFimRecorrencia().format(DATE_FORMATTER) : "N/A") + ") [Pressione Enter para manter/Remover data de fim]: ");
+                String novaDataFimRecorrenciaStr = scanner.nextLine();
+                if (!novaDataFimRecorrenciaStr.isBlank()) {
+                    try {
+                        LocalDate novaDataFimRecorrencia = LocalDate.parse(novaDataFimRecorrenciaStr, DATE_FORMATTER);
+
+                        if (!novaDataFimRecorrencia.isAfter(LocalDate.now().minusDays(1))) {
+                            System.out.println("A data de fim de recorrência não pode ser anterior ao dia de hoje. Data de fim NÃO atualizada.");
+                        } else {
+                            trExistente.setDataFimRecorrencia(novaDataFimRecorrencia);
+                        }
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Formato de data inválido. Data de Fim da Recorrência NÃO atualizada.");
+                    }
+                } else {
+                    trExistente.setDataFimRecorrencia(null);
+                }
+
+
+                gerenciadorTarefas.atualizarTarefa(trExistente);
+
+            } else {
+                LocalDate novaDataVencimento = tarefaExistente.getDataVencimento();
+                System.out.print("Digite a NOVA data de vencimento (DD-MM-AAAA) (atual: " + tarefaExistente.getDataVencimento().format(DATE_FORMATTER) + ") [Pressione Enter para manter]: ");
+                String novaDataStrInput = scanner.nextLine();
+                if (!novaDataStrInput.isBlank()) {
+                    try {
+                        novaDataVencimento = LocalDate.parse(novaDataStrInput, DATE_FORMATTER);
+                        if (!novaDataVencimento.isAfter(LocalDate.now().minusDays(1))) {
+                            System.out.println("A nova data de vencimento não pode ser anterior ao dia de hoje. Data de vencimento NÃO atualizada.");
+                            novaDataVencimento = tarefaExistente.getDataVencimento();
+                        }
+                    } catch (DateTimeParseException e) {
+                        System.out.println("Formato de data inválido. Use DD-MM-AAAA. Data de vencimento NÃO atualizada.");
+                        novaDataVencimento = tarefaExistente.getDataVencimento();
+                    }
+                }
+
+                StatusTarefa novoStatus = tarefaExistente.getStatus();
                 System.out.print("Digite o NOVO status (PENDENTE, CONCLUIDA, CANCELADA) (atual: " + tarefaExistente.getStatus() + ") [Pressione Enter para manter]: ");
                 String novoStatusStrInput = scanner.nextLine().toUpperCase();
                 if (!novoStatusStrInput.isBlank()) {
@@ -387,31 +564,9 @@ public class App {
                         System.out.println("Status inválido. Use PENDENTE, CONCLUIDA ou CANCELADA. Status NÃO atualizado.");
                     }
                 }
-            }
 
-            Tarefa tarefaAtualizada;
-            if (tarefaExistente instanceof TarefaRecorrente) {
-                TarefaRecorrente trExistente = (TarefaRecorrente) tarefaExistente;
-                // Para tarefa recorrente, a dataVencimento é a "próxima ocorrência"
-                // e é importante que o construtor recalcule ela se necessário.
-                tarefaAtualizada = new TarefaRecorrente(
-                        trExistente.getId(),
-                        novaDescricao,
-                        novaDataVencimento, // Esta será a nova data de vencimento 'base' para a recorrência
-                        novaPrioridade,
-                        trExistente.getFrequencia(),
-                        trExistente.getDataInicioRecorrencia(),
-                        trExistente.getDataFimRecorrencia()
-                );
-                if (trExistente.getProximaOcorrencia() == null) {
-                    tarefaAtualizada.setStatus(StatusTarefa.CONCLUIDA);
-                } else {
-                    tarefaAtualizada.setStatus(StatusTarefa.PENDENTE); // Ou o status que a lógica de recorrência definir
-                }
-                ((TarefaRecorrente) tarefaAtualizada).setDataCriacao(trExistente.getDataCriacao());
 
-            } else {
-                tarefaAtualizada = new Tarefa(
+                Tarefa tarefaSimplesAtualizada = new Tarefa(
                         tarefaExistente.getId(),
                         novaDescricao,
                         novaDataVencimento,
@@ -419,9 +574,9 @@ public class App {
                         novoStatus,
                         tarefaExistente.getDataCriacao()
                 );
+                gerenciadorTarefas.atualizarTarefa(tarefaSimplesAtualizada);
             }
 
-            gerenciadorTarefas.atualizarTarefa(tarefaAtualizada);
         } catch (InputMismatchException e) {
             System.out.println("ID inválido. Por favor, digite um número inteiro.");
             scanner.nextLine();
@@ -448,168 +603,6 @@ public class App {
         } else {
             System.out.println("Não há tarefas pendentes para sugerir no momento.");
         }
-    }
-
-    private static void executaTestesTemporarios(GerenciadorTarefas gerenciadorTarefas) {
-        /* Testes Temporários */
-
-
-        System.out.println("\n--- Gerenciador de tarefas instanciado ---");
-
-        System.out.println("\n--- Adicionando Tarefas ---");
-        gerenciadorTarefas.adicionarTarefa("Comprar pão e leite", LocalDate.of(2025, 7, 3), Prioridade.ALTA);
-        gerenciadorTarefas.adicionarTarefa("Pagar contas da casa", LocalDate.of(2025, 7, 5), Prioridade.URGENTE);
-        gerenciadorTarefas.adicionarTarefa("Estudar Java por 1 hora", LocalDate.of(2025, 7, 2), Prioridade.MEDIA);
-        gerenciadorTarefas.adicionarTarefa("Responder e-mails pendentes", LocalDate.of(2025, 7, 4), Prioridade.BAIXA);
-        gerenciadorTarefas.adicionarTarefa("Pagar contas da casa", LocalDate.of(2025, 7, 4), Prioridade.URGENTE);
-
-        System.out.println("\n--- Listando todas as Tarefas ---");
-        List<Tarefa> todasAsTarefas = gerenciadorTarefas.listarTodasTarefas();
-        if (todasAsTarefas.isEmpty()) {
-            System.out.println("Nenhuma tarefa encontrada.");
-        } else {
-            for (Tarefa t : todasAsTarefas) {
-                System.out.println("ID: " + t.getId() +
-                        ", Descrição: " + t.getDescricao() +
-                        ", Vencimento: " + t.getDataVencimento() +
-                        ", Prioridade: " + t.getPrioridade() +
-                        ", Concluída: " + t.isConcluido());
-            }
-        }
-
-        System.out.println("\n--- Buscando Tarefa por ID (ID: 2) ---");
-        Tarefa tarefaEncontrada = gerenciadorTarefas.buscarTarefaPorId(2);
-        if (tarefaEncontrada != null) {
-            System.out.println("Tarefa encontrada: " + tarefaEncontrada.getDescricao());
-        } else {
-            System.out.println("Tarefa com ID 2 não encontrada.");
-        }
-
-        System.out.println("\n--- Buscando Tarefa por ID (ID: 99 - inexistente) ---");
-        Tarefa tarefaNaoEncontrada = gerenciadorTarefas.buscarTarefaPorId(99);
-        if (tarefaNaoEncontrada != null) {
-            System.out.println("Tarefa encontrada: " + tarefaNaoEncontrada.getDescricao());
-        } else {
-            System.out.println("Tarefa com ID 99 não encontrada.");
-        }
-
-        System.out.println("\n--- Marcando Tarefa com ID 1 como Concluída ---");
-        gerenciadorTarefas.concluirTarefa(1);
-
-        System.out.println("\n--- Buscando Tarefas por Texto: 'Java' ---");
-        List<Tarefa> tarefasJava = gerenciadorTarefas.buscarTarefaPorTexto("Java");
-        if (tarefasJava.isEmpty()) {
-            System.out.println("Nenhuma tarefa encontrada com 'Java'.");
-        } else {
-            for (Tarefa t : tarefasJava) {
-                System.out.println("  Encontrada: ID: " + t.getId() + ", Descrição: " + t.getDescricao());
-            }
-        }
-
-        System.out.println("\n--- Buscando Tarefas por Texto: 'contas' ---");
-        List<Tarefa> tarefasContas = gerenciadorTarefas.buscarTarefaPorTexto("contas");
-        if (tarefasContas.isEmpty()) {
-            System.out.println("Nenhuma tarefa encontrada com 'contas'.");
-        } else {
-            for (Tarefa t : tarefasContas) {
-                System.out.println("  Encontrada: ID: " + t.getId() + ", Descrição: " + t.getDescricao());
-            }
-        }
-
-        System.out.println("\n--- Buscando Tarefas por Texto: 'projeto' (case-insensitive) ---");
-        List<Tarefa> tarefasProjeto = gerenciadorTarefas.buscarTarefaPorTexto("PROJETO");
-        if (tarefasProjeto.isEmpty()) {
-            System.out.println("Nenhuma tarefa encontrada com 'PROJETO'.");
-        } else {
-            for (Tarefa t : tarefasProjeto) {
-                System.out.println("  Encontrada: ID: " + t.getId() + ", Descrição: " + t.getDescricao());
-            }
-        }
-
-        System.out.println("\n--- Listando Tarefas Após Marcar Concluída ---");
-        for (Tarefa t : gerenciadorTarefas.listarTodasTarefas()) {
-            System.out.println("ID: " + t.getId() +
-                    ", Descrição: " + t.getDescricao() +
-                    ", Concluída: " + t.isConcluido());
-        }
-
-        System.out.println("\n--- Atualizando Tarefa com ID 3 ---");
-        Tarefa tarefaAtualizada = new Tarefa(3, "Estudar Java avançado por 2 horas", LocalDate.of(2025, 7, 7), Prioridade.ALTA, StatusTarefa.PENDENTE, LocalDate.now());
-        gerenciadorTarefas.atualizarTarefa(tarefaAtualizada);
-
-        System.out.println("\n--- Listando Tarefas Após Atualização ---");
-        for (Tarefa t : gerenciadorTarefas.listarTodasTarefas()) {
-            System.out.println("ID: " +
-                    t.getId() +
-                    ", Descrição: " + t.getDescricao() +
-                    ", Vencimento: " + t.getDataVencimento() +
-                    ", Prioridade: " + t.getPrioridade() +
-                    ", Criada em: " + t.getDataCriacao());
-        }
-
-        // 7. Remover uma tarefa
-        System.out.println("\n--- Removendo Tarefa com ID 4 ---");
-        gerenciadorTarefas.removerTarefa(4);
-
-        System.out.println("\n--- Tentando remover tarefa inexistente (ID 100) ---");
-        gerenciadorTarefas.removerTarefa(100);
-
-        System.out.println("\n--- Listando Tarefas Finais ---");
-        todasAsTarefas = gerenciadorTarefas.listarTodasTarefas();
-        if (todasAsTarefas.isEmpty()) {
-            System.out.println("Nenhuma tarefa restante.");
-        } else {
-            for (Tarefa t : todasAsTarefas) {
-                System.out.println("ID: " + t.getId() +
-                        ", Descrição: " + t.getDescricao());
-            }
-        }
-
-        System.out.println("\nTestes do Módulo de Tarefas Concluídos.");
-
-        System.out.println("\n--- TESTE: Visual da Semana");
-        List<Tarefa> minhasTarefasDaSemana = gerenciadorTarefas.listarTarefasDaSemana();
-        if (minhasTarefasDaSemana.isEmpty()) {
-            System.out.println("Nenhuma tarefa para esta semana!");
-        } else {
-            for (Tarefa t : minhasTarefasDaSemana) {
-                System.out.println(t);
-            }
-        }
-
-        System.out.println("\n---  Teste: Sugestão de Tarefa Prioritária ---");
-        Optional<Tarefa> tarefaSugerida = gerenciadorTarefas.sugerirTarefaPrioritaria();
-
-        if (tarefaSugerida.isPresent()) {
-            System.out.println("Sua próxima tarefa prioritária sugerida é:");
-            System.out.println(tarefaSugerida.get());
-        } else {
-            System.out.println("Não há tarefas pendentes para sugerir no momento");
-        }
-
-        System.out.println("\n--- Testando Tarefa Recorrente ---");
-        // ID será 6 se você adicionou as 5 tarefas anteriores
-        gerenciadorTarefas.adicionarTarefa(new TarefaRecorrente(
-                IdGenerator.generateNewId(), // Novo ID
-                "Pagar aluguel",
-                LocalDate.of(2025, 7, 5), // Vence dia 5 de Julho
-                Prioridade.URGENTE,
-                FrequenciaRecorrencia.MENSAL,
-                LocalDate.of(2025, 1, 5), // Começou em 5 de Janeiro
-                LocalDate.of(2025, 12, 31)
-        ));
-
-        Tarefa tarefaAluguel = gerenciadorTarefas.buscarTarefaPorId(6); // Supondo ID 6
-        if (tarefaAluguel != null) {
-            System.out.println("Tarefa de Aluguel ANTES de concluir: " + tarefaAluguel);
-            tarefaAluguel.concluir(); // Conclui a tarefa de aluguel
-            System.out.println("Tarefa de Aluguel DEPOIS de concluir: " + tarefaAluguel);
-        }
-
-        System.out.println("\nTestes do Módulo de Tarefas Concluídos.");
-
-
-        /* Fim dos testes temporários */
     }
 
 }
