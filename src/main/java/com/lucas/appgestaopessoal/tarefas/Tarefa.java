@@ -1,6 +1,7 @@
 package com.lucas.appgestaopessoal.tarefas;
 
 import com.lucas.appgestaopessoal.util.Prioridade;
+import com.lucas.appgestaopessoal.util.StatusTarefa;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -9,24 +10,21 @@ public class Tarefa {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
-    private int id;
-    private String descricao;
-    private LocalDate dataVencimento;
-    private Prioridade prioridade;
-    private boolean concluido;
+    protected int id;
+    protected String descricao;
+    protected LocalDate dataVencimento;
+    protected Prioridade prioridade;
+    protected StatusTarefa status;
+    protected LocalDate dataCriacao;
 
-    public Tarefa(int id, String descricao, LocalDate dataVencimento, Prioridade prioridade, boolean concluido) {
+    public Tarefa(int id, String descricao, LocalDate dataVencimento, Prioridade prioridade, StatusTarefa status, LocalDate dataCriacao) {
         this.id = id;
         this.descricao = descricao;
         this.dataVencimento = dataVencimento;
         this.prioridade = prioridade;
-        this.concluido = concluido;
+        this.status = status;
+        this.dataCriacao = dataCriacao;
     }
-
-    public Tarefa(int id, String descricao, LocalDate dataVencimento, Prioridade prioridade) {
-        this(id, descricao, dataVencimento, prioridade, false); // Task starts as not concluded
-    }
-
 
     public int getId() {
         return id;
@@ -48,16 +46,20 @@ public class Tarefa {
         this.dataVencimento = dataVencimento;
     }
 
-    public boolean isConcluido() {
-        return concluido;
+    public StatusTarefa getStatus() {
+        return status;
     }
 
-    public void setConcluido(boolean concluido) {
-        this.concluido = concluido;
+    public void setStatus(StatusTarefa status) {
+        this.status = status;
+    }
+
+    public boolean isConcluido() {
+        return this.status == StatusTarefa.CONCLUIDA;
     }
 
     public void concluir(){
-        this.concluido = true;
+        this.status = StatusTarefa.CONCLUIDA;
     }
 
     public void setPrioridade(Prioridade novaPrioridade){
@@ -69,16 +71,27 @@ public class Tarefa {
         return prioridade;
     }
 
+    public LocalDate getDataCriacao() {
+        return dataCriacao;
+    }
+
+    public void setDataCriacao(LocalDate dataCriacao) {
+        this.dataCriacao = dataCriacao;
+    }
+
     @Override
     public String toString(){
 
         String vencimentoFormatado = (dataVencimento != null) ? dataVencimento.format(DATE_FORMATTER) : "N/A";
+        String criacaoFormatada = (dataCriacao != null) ? dataCriacao.format(DATE_FORMATTER) : "N/A";
 
-        return  "ID: " + this.getId() +
-                                    ", Descrição: " + this.getDescricao() +
-                                    ", Vencimento: " + vencimentoFormatado +
-                                    ", Prioridade: " + this.getPrioridade() +
-                                    ", Concluída: " + this.isConcluido();
+        return  "ID: " +
+                this.id +
+                ", Descrição: " + this.descricao +
+                ", Vencimento: " + vencimentoFormatado +
+                ", Prioridade: " + this.prioridade +
+                ", Status: " + this.status +
+                ", Cadastrada em: " + criacaoFormatada;
 
     }
 }

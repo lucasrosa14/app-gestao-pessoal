@@ -2,6 +2,7 @@ package com.lucas.appgestaopessoal.tarefas;
 
 import com.lucas.appgestaopessoal.util.IdGenerator;
 import com.lucas.appgestaopessoal.util.Prioridade;
+import com.lucas.appgestaopessoal.util.StatusTarefa;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -19,8 +20,8 @@ public class GerenciadorTarefas {
     }
 
     public void adicionarTarefa(String descricao, LocalDate dataVencimento, Prioridade prioridade) {
-        int novoId = IdGenerator.generateNewId();
-        Tarefa tarefa = new Tarefa(novoId, descricao, dataVencimento, prioridade);
+        int id = IdGenerator.generateNewId();
+        Tarefa tarefa = new Tarefa(id, descricao, dataVencimento, prioridade, StatusTarefa.PENDENTE, LocalDate.now());
         this.tarefas.add(tarefa);
         System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + tarefa.getId() + "') adicionada com sucesso!");
     }
@@ -89,16 +90,17 @@ public class GerenciadorTarefas {
         return false;
     }
 
-    public boolean atualizarTarefa(Tarefa tarefaAtualizada) {
-        for (int i = 0; i < tarefas.size(); i++) {
-            if (tarefas.get(i).getId() == tarefaAtualizada.getId()) {
-                tarefas.set(i, tarefaAtualizada);
-                System.out.println("Tarefa com ID " + tarefaAtualizada.getId() + " atualizada.");
-                return true;
-            }
+    public void atualizarTarefa(Tarefa tarefaAtualizada) {
+        Tarefa tarefaExistente = buscarTarefaPorId(tarefaAtualizada.getId());
+        if (tarefaExistente != null) {
+            tarefaAtualizada.setStatus(tarefaExistente.getStatus());
+
+            int index = tarefas.indexOf(tarefaExistente);
+            tarefas.set(index, tarefaAtualizada);
+            System.out.println("Tarefa com ID " + tarefaAtualizada.getId() + " atualizada com sucesso!");
+        } else {
+            System.out.println("Tarefa com ID " + tarefaAtualizada.getId() + " não encontrada para atualização.");
         }
-        System.out.println("Tarefa com ID " + tarefaAtualizada.getId() + " não encontrada.");
-        return false;
     }
 
     public List<Tarefa> listarTarefasDaSemana() {

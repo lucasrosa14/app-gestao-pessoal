@@ -2,6 +2,7 @@ package com.lucas.appgestaopessoal.tarefas;
 
 import com.lucas.appgestaopessoal.util.FrequenciaRecorrencia;
 import com.lucas.appgestaopessoal.util.Prioridade;
+import com.lucas.appgestaopessoal.util.StatusTarefa;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -19,7 +20,7 @@ public class TarefaRecorrente extends Tarefa {
     // Construtor para TarefaRecorrente
     public TarefaRecorrente(int id, String descricao, LocalDate dataVencimentoInicialDigitada, Prioridade prioridade,
                             FrequenciaRecorrencia frequencia, LocalDate dataInicioRecorrencia, LocalDate dataFimRecorrencia) {
-        super(id, descricao, dataVencimentoInicialDigitada, prioridade, false); // Tarefas recorrentes começam como não concluídas
+        super(id, descricao, dataVencimentoInicialDigitada, prioridade, StatusTarefa.PENDENTE, LocalDate.now()); // Tarefas recorrentes começam como não concluídas
 
         this.frequencia = frequencia;
         this.dataInicioRecorrencia = dataInicioRecorrencia;
@@ -70,20 +71,13 @@ public class TarefaRecorrente extends Tarefa {
         this.proximaOcorrencia = proximaOcorrencia;
     }
 
-
-    /**
-     * Sobrescreve o método 'concluir' da Tarefa pai.
-     * Ao concluir uma TarefaRecorrente, ela calcula sua próxima ocorrência
-     * e, se a data de término não foi atingida, a tarefa é marcada novamente como não concluída
-     * para a próxima iteração.
-     */
-
     @Override
     public void concluir() {
         super.concluir(); // Marca a ocorrência atual como concluída (Tarefa.concluido = true)
 
         // Se a próxima ocorrência já é nula (recorrência finalizada), não faz nada
         if (this.proximaOcorrencia == null) {
+            super.setStatus(StatusTarefa.CONCLUIDA);
             return;
         }
 
@@ -138,6 +132,7 @@ public class TarefaRecorrente extends Tarefa {
             if (dataFimRecorrencia != null && proximaOcorrenciaCalculada.isAfter(dataFimRecorrencia)) {
                 this.proximaOcorrencia = null;
                 this.setDataVencimento(null);
+                super.setStatus(StatusTarefa.CONCLUIDA);
                 return;
             }
         }
@@ -146,13 +141,14 @@ public class TarefaRecorrente extends Tarefa {
         if (dataFimRecorrencia != null && proximaOcorrenciaCalculada.isAfter(dataFimRecorrencia)) {
             this.proximaOcorrencia = null; // Sinaliza que não há mais ocorrências
             this.setDataVencimento(null); // Remove a data de vencimento da tarefa pai
+            super.setStatus(StatusTarefa.CONCLUIDA);
             return;
         }
 
         // 5. Atualiza a próxima ocorrência e o status da tarefa para a nova iteração
         this.proximaOcorrencia = proximaOcorrenciaCalculada;
         this.setDataVencimento(this.proximaOcorrencia); // Atualiza a data de vencimento da tarefa pai
-        this.setConcluido(false); // Marca como não concluída para a nova ocorrência
+        this.setStatus(StatusTarefa.PENDENTE); // Marca como não concluída para a nova ocorrência
     }
 
     private void ajustarProximaOcorrenciaParaFuturo() {
@@ -194,23 +190,15 @@ public class TarefaRecorrente extends Tarefa {
         }
     }
 
-
-    /**
-     * Sobrescreve o toString() para incluir informações de recorrência,
-     * e construir a string de forma mais controlada para evitar vírgulas extras.
-     */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ID: ").append(super.getId());
-        sb.append(", Descrição: ").append(super.getDescricao());
-        sb.append(", Prioridade: ").append(super.getPrioridade());
-        sb.append(", Concluída: ").append(super.isConcluido());
+        StringBuilder sb = new StringBuilder(super.toString());
         sb.append(", Tipo: Recorrente");
+        sb.append(", Frequência: ").append(this.frequencia);
         if (this.dataPrimeiraOcorrencia != null) {
             sb.append(", Primeira Ocorrência: ").append(this.dataPrimeiraOcorrencia.format(DATE_FORMATTER));
         }
-        sb.append(", Frequência: ").append(this.frequencia);
+
         sb.append(", Início Recorrência: ").append(this.dataInicioRecorrencia.format(DATE_FORMATTER));
         if (this.dataFimRecorrencia != null) {
             sb.append(", Fim Recorrência: ").append(this.dataFimRecorrencia.format(DATE_FORMATTER));

@@ -6,6 +6,7 @@ import com.lucas.appgestaopessoal.tarefas.TarefaRecorrente;
 import com.lucas.appgestaopessoal.util.FrequenciaRecorrencia;
 import com.lucas.appgestaopessoal.util.IdGenerator;
 import com.lucas.appgestaopessoal.util.Prioridade;
+import com.lucas.appgestaopessoal.util.StatusTarefa;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -148,7 +149,7 @@ public class App {
         LocalDate dataVencimento;
         try {
             dataVencimento = LocalDate.parse(dataStr, DATE_FORMATTER);
-            if (dataVencimento.isBefore(LocalDate.now())) {
+            if (!dataVencimento.isAfter(LocalDate.now().minusDays(1))) {
                 System.out.println("A data de vencimento não pode ser anterior ao dia de hoje. Tarefa não adicionada.");
                 return;
             }
@@ -375,16 +376,52 @@ public class App {
                 }
             }
 
-            Tarefa tarefaAtualizada = new Tarefa(
-                    tarefaExistente.getId(),
-                    novaDescricao,
-                    novaDataVencimento,
-                    novaPrioridade,
-                    tarefaExistente.isConcluido()
-            );
+            StatusTarefa novoStatus = tarefaExistente.getStatus();
+            if (!(tarefaExistente instanceof TarefaRecorrente)) { // Tarefas recorrentes têm status dinâmico via concluir()
+                System.out.print("Digite o NOVO status (PENDENTE, CONCLUIDA, CANCELADA) (atual: " + tarefaExistente.getStatus() + ") [Pressione Enter para manter]: ");
+                String novoStatusStrInput = scanner.nextLine().toUpperCase();
+                if (!novoStatusStrInput.isBlank()) {
+                    try {
+                        novoStatus = StatusTarefa.valueOf(novoStatusStrInput);
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("Status inválido. Use PENDENTE, CONCLUIDA ou CANCELADA. Status NÃO atualizado.");
+                    }
+                }
+            }
+
+            Tarefa tarefaAtualizada;
+            if (tarefaExistente instanceof TarefaRecorrente) {
+                TarefaRecorrente trExistente = (TarefaRecorrente) tarefaExistente;
+                // Para tarefa recorrente, a dataVencimento é a "próxima ocorrência"
+                // e é importante que o construtor recalcule ela se necessário.
+                tarefaAtualizada = new TarefaRecorrente(
+                        trExistente.getId(),
+                        novaDescricao,
+                        novaDataVencimento, // Esta será a nova data de vencimento 'base' para a recorrência
+                        novaPrioridade,
+                        trExistente.getFrequencia(),
+                        trExistente.getDataInicioRecorrencia(),
+                        trExistente.getDataFimRecorrencia()
+                );
+                if (trExistente.getProximaOcorrencia() == null) {
+                    tarefaAtualizada.setStatus(StatusTarefa.CONCLUIDA);
+                } else {
+                    tarefaAtualizada.setStatus(StatusTarefa.PENDENTE); // Ou o status que a lógica de recorrência definir
+                }
+                ((TarefaRecorrente) tarefaAtualizada).setDataCriacao(trExistente.getDataCriacao());
+
+            } else {
+                tarefaAtualizada = new Tarefa(
+                        tarefaExistente.getId(),
+                        novaDescricao,
+                        novaDataVencimento,
+                        novaPrioridade,
+                        novoStatus,
+                        tarefaExistente.getDataCriacao()
+                );
+            }
 
             gerenciadorTarefas.atualizarTarefa(tarefaAtualizada);
-
         } catch (InputMismatchException e) {
             System.out.println("ID inválido. Por favor, digite um número inteiro.");
             scanner.nextLine();
@@ -497,15 +534,17 @@ public class App {
         }
 
         System.out.println("\n--- Atualizando Tarefa com ID 3 ---");
-        Tarefa tarefaAtualizada = new Tarefa(3, "Estudar Java avançado por 2 horas", LocalDate.of(2025, 7, 7), Prioridade.ALTA);
+        Tarefa tarefaAtualizada = new Tarefa(3, "Estudar Java avançado por 2 horas", LocalDate.of(2025, 7, 7), Prioridade.ALTA, StatusTarefa.PENDENTE, LocalDate.now());
         gerenciadorTarefas.atualizarTarefa(tarefaAtualizada);
 
         System.out.println("\n--- Listando Tarefas Após Atualização ---");
         for (Tarefa t : gerenciadorTarefas.listarTodasTarefas()) {
-            System.out.println("ID: " + t.getId() +
+            System.out.println("ID: " +
+                    t.getId() +
                     ", Descrição: " + t.getDescricao() +
                     ", Vencimento: " + t.getDataVencimento() +
-                    ", Prioridade: " + t.getPrioridade());
+                    ", Prioridade: " + t.getPrioridade() +
+                    ", Criada em: " + t.getDataCriacao());
         }
 
         // 7. Remover uma tarefa
