@@ -4,18 +4,17 @@ import com.lucas.appgestaopessoal.util.Prioridade;
 import com.lucas.appgestaopessoal.util.StatusTarefa;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+
+import static com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATTER;
 
 public class Tarefa {
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
-    protected int id;
-    protected String descricao;
-    protected LocalDate dataVencimento;
-    protected Prioridade prioridade;
-    protected StatusTarefa status;
-    protected LocalDate dataCriacao;
+    private final int id;
+    private String descricao;
+    private LocalDate dataVencimento;
+    private Prioridade prioridade;
+    private StatusTarefa status;
+    private LocalDate dataCriacao;
 
     public Tarefa(int id, String descricao, LocalDate dataVencimento, Prioridade prioridade, StatusTarefa status, LocalDate dataCriacao) {
         this.id = id;
@@ -58,7 +57,7 @@ public class Tarefa {
         return this.status == StatusTarefa.CONCLUIDA;
     }
 
-    public void setPrioridade(Prioridade novaPrioridade){
+    public void setPrioridade(Prioridade novaPrioridade) {
         this.prioridade = novaPrioridade;
 
     }
@@ -75,7 +74,7 @@ public class Tarefa {
         this.dataCriacao = dataCriacao;
     }
 
-    public void concluir(){
+    public void concluir() {
         this.status = StatusTarefa.CONCLUIDA;
     }
 
@@ -84,18 +83,22 @@ public class Tarefa {
     }
 
     @Override
-    public String toString(){
+    public String toString() {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("ID: ").append(getId());
+        sb.append(", Descrição: ").append(getDescricao());
 
         String vencimentoFormatado = (dataVencimento != null) ? dataVencimento.format(DATE_FORMATTER) : "N/A";
-        String criacaoFormatada = (dataCriacao != null) ? dataCriacao.format(DATE_FORMATTER) : "N/A";
+        sb.append(", Vencimento: ").append(vencimentoFormatado);
 
-        return  "ID: " +
-                this.id +
-                ", Descrição: " + this.descricao +
-                ", Vencimento: " + vencimentoFormatado +
-                ", Prioridade: " + this.prioridade +
-                ", Status: " + this.status +
-                ", Cadastrada em: " + criacaoFormatada;
+        sb.append(", Prioridade: ").append(getPrioridade());
+        sb.append(", Status: ").append(getStatus());
+
+        String criacaoFormatada = (dataCriacao != null) ? dataCriacao.format(DATE_FORMATTER) : "N/A";
+        sb.append(", Cadastrada em: ").append(criacaoFormatada);
+
+        return sb.toString();
 
     }
 }

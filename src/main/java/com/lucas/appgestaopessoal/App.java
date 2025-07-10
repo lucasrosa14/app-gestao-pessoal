@@ -1,7 +1,7 @@
 package com.lucas.appgestaopessoal;
 
-import com.lucas.appgestaopessoal.tarefas.Tarefa;
 import com.lucas.appgestaopessoal.tarefas.GerenciadorTarefas;
+import com.lucas.appgestaopessoal.tarefas.Tarefa;
 import com.lucas.appgestaopessoal.tarefas.TarefaRecorrente;
 import com.lucas.appgestaopessoal.util.FrequenciaRecorrencia;
 import com.lucas.appgestaopessoal.util.IdGenerator;
@@ -476,8 +476,7 @@ public class App {
             }
 
 
-            if (tarefaExistente instanceof TarefaRecorrente) {
-                TarefaRecorrente trExistente = (TarefaRecorrente) tarefaExistente;
+            if (tarefaExistente instanceof TarefaRecorrente trExistente) {
 
 
                 trExistente.setDescricao(novaDescricao);

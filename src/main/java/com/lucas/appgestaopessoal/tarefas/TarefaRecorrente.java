@@ -5,11 +5,10 @@ import com.lucas.appgestaopessoal.util.Prioridade;
 import com.lucas.appgestaopessoal.util.StatusTarefa;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+
+import static com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATTER;
 
 public class TarefaRecorrente extends Tarefa {
-
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     private FrequenciaRecorrencia frequencia;
     private LocalDate dataInicioRecorrencia;
@@ -27,6 +26,20 @@ public class TarefaRecorrente extends Tarefa {
         calcularProximaOcorrencia(); // Deve recalcular a próxima ocorrência
     }
 
+    private LocalDate avancarDataPorFrequencia(LocalDate dataBase, FrequenciaRecorrencia freq) {
+        if (dataBase == null) {
+            // Decida como lidar com dataBase nula aqui, talvez lançar uma exceção
+            throw new IllegalArgumentException("Data base para avanço de frequência não pode ser nula.");
+        }
+        return switch (freq) {
+            case DIARIA -> dataBase.plusDays(1);
+            case SEMANAL -> dataBase.plusWeeks(1);
+            case QUINZENAL -> dataBase.plusWeeks(2); // Consistente: Duas semanas
+            case MENSAL -> dataBase.plusMonths(1);
+            case ANUAL -> dataBase.plusYears(1);
+        };
+    }
+    
     // GETTERS
     public LocalDate getPrimeiraOcorrencia() {
         return dataPrimeiraOcorrencia;
@@ -105,30 +118,18 @@ public class TarefaRecorrente extends Tarefa {
                 break;
             }
 
-
             if (!tempDate.isBefore(hoje)) {
                 proximaOcorrenciaEncontrada = tempDate;
                 break;
             }
 
-
-            switch (frequencia) {
-                case DIARIA:
-                    tempDate = tempDate.plusDays(1);
-                    break;
-                case SEMANAL:
-                    tempDate = tempDate.plusWeeks(1);
-                    break;
-                case QUINZENAL:
-                    tempDate = tempDate.plusDays(15);
-                    break;
-                case MENSAL:
-                    tempDate = tempDate.plusMonths(1);
-                    break;
-                case ANUAL:
-                    tempDate = tempDate.plusYears(1);
-                    break;
-            }
+            tempDate = switch (frequencia) {
+                case DIARIA -> tempDate.plusDays(1);
+                case SEMANAL -> tempDate.plusWeeks(1);
+                case QUINZENAL -> tempDate.plusDays(15);
+                case MENSAL -> tempDate.plusMonths(1);
+                case ANUAL -> tempDate.plusYears(1);
+            };
         }
 
 
@@ -156,23 +157,13 @@ public class TarefaRecorrente extends Tarefa {
 
         // 1. Calcula a próxima ocorrência a partir da atual
         LocalDate proximaOcorrenciaCalculada = this.proximaOcorrencia;
-        switch (frequencia) {
-            case DIARIA:
-                proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusDays(1);
-                break;
-            case SEMANAL:
-                proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusWeeks(1);
-                break;
-            case QUINZENAL:
-                proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusWeeks(2);
-                break;
-            case MENSAL:
-                proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusMonths(1);
-                break;
-            case ANUAL:
-                proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusYears(1);
-                break;
-        }
+        proximaOcorrenciaCalculada = switch (frequencia) {
+            case DIARIA -> proximaOcorrenciaCalculada.plusDays(1);
+            case SEMANAL -> proximaOcorrenciaCalculada.plusWeeks(1);
+            case QUINZENAL -> proximaOcorrenciaCalculada.plusWeeks(2);
+            case MENSAL -> proximaOcorrenciaCalculada.plusMonths(1);
+            case ANUAL -> proximaOcorrenciaCalculada.plusYears(1);
+        };
 
         // 2. Define a data limite inferior: deve ser hoje OU a data de início da recorrência (se esta for futura)
         LocalDate hoje = LocalDate.now();
@@ -184,23 +175,13 @@ public class TarefaRecorrente extends Tarefa {
         // 3. Avança a próxima ocorrência calculada até que esteja no futuro (ou hoje)
         // E também que esteja na ou após a data de início da recorrência.
         while (proximaOcorrenciaCalculada.isBefore(dataLimiteInferior)) {
-            switch (frequencia) {
-                case DIARIA:
-                    proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusDays(1);
-                    break;
-                case SEMANAL:
-                    proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusWeeks(1);
-                    break;
-                case QUINZENAL:
-                    proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusWeeks(2);
-                    break;
-                case MENSAL:
-                    proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusMonths(1);
-                    break;
-                case ANUAL:
-                    proximaOcorrenciaCalculada = proximaOcorrenciaCalculada.plusYears(1);
-                    break;
-            }
+            proximaOcorrenciaCalculada = switch (frequencia) {
+                case DIARIA -> proximaOcorrenciaCalculada.plusDays(1);
+                case SEMANAL -> proximaOcorrenciaCalculada.plusWeeks(1);
+                case QUINZENAL -> proximaOcorrenciaCalculada.plusWeeks(2);
+                case MENSAL -> proximaOcorrenciaCalculada.plusMonths(1);
+                case ANUAL -> proximaOcorrenciaCalculada.plusYears(1);
+            };
             // Verifica novamente a data de fim dentro do loop, caso pule muitas ocorrências
             if (dataFimRecorrencia != null && proximaOcorrenciaCalculada.isAfter(dataFimRecorrencia)) {
                 this.proximaOcorrencia = null;
@@ -232,7 +213,6 @@ public class TarefaRecorrente extends Tarefa {
         sb.append(", Descrição: ").append(getDescricao());
         sb.append(", Prioridade: ").append(getPrioridade());
         sb.append(", Status: ").append(getStatus());
-        sb.append(", Cadastrada em: ").append(getDataCriacao().format(DATE_FORMATTER));
         sb.append(", Frequência: ").append(frequencia);
         sb.append(", Início Recorrência: ").append(dataInicioRecorrencia != null ? dataInicioRecorrencia.format(DATE_FORMATTER) : "N/A");
         sb.append(", Primeira Ocorrência: ").append(dataPrimeiraOcorrencia.format(DATE_FORMATTER));
@@ -245,6 +225,8 @@ public class TarefaRecorrente extends Tarefa {
             // Se getDataVencimento for null, significa que não há mais ocorrências
             sb.append(", Próxima Ocorrência: FINALIZADA");
         }
+        sb.append(", Cadastrada em: ").append(getDataCriacao().format(DATE_FORMATTER));
+
 
         return sb.toString();
     }

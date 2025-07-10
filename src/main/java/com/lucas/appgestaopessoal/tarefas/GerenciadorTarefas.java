@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class GerenciadorTarefas {
 
-    private List<Tarefa> tarefas;
+    private final List<Tarefa> tarefas;
 
     public GerenciadorTarefas() {
         this.tarefas = new ArrayList<>();
@@ -30,10 +30,9 @@ public class GerenciadorTarefas {
         return tarefa;
     }
 
-    public Tarefa adicionarTarefa(Tarefa tarefa) {
+    public void adicionarTarefa(Tarefa tarefa) {
         this.tarefas.add(tarefa);
         System.out.println("Tarefa '" + tarefa.getDescricao() + "' (ID: " + tarefa.getId() + ") adicionada com sucesso!");
-        return tarefa;
     }
 
     public List<Tarefa> listarTodasTarefas() {
@@ -72,9 +71,7 @@ public class GerenciadorTarefas {
 
     public List<Tarefa> listarTarefasOrdenadasPorVencimento() {
         return tarefas.stream()
-                .sorted(Comparator
-                        .comparing(Tarefa::getDataVencimento, Comparator.reverseOrder())
-                )
+                .sorted(Comparator.comparing(Tarefa::getDataVencimento))
                 .collect(Collectors.toList());
     }
 
@@ -99,19 +96,18 @@ public class GerenciadorTarefas {
         String textoBuscaNormalizado = normalizeText(textoBusca);
 
         return tarefas.stream()
-                .filter(tarefa -> normalizeText(tarefa.getDescricao()).toLowerCase().contains(textoBuscaNormalizado))
+                .filter(tarefa -> normalizeText(tarefa.getDescricao()).contains(textoBuscaNormalizado))
                 .collect(Collectors.toList());
     }
 
-    public boolean removerTarefa(int id) {
+    public void removerTarefa(int id) {
         Tarefa tarefaParaRemover = buscarTarefaPorId(id);
         if (tarefaParaRemover != null) {
             this.tarefas.remove(tarefaParaRemover);
             System.out.println("Tarefa com ID " + id + " removida com sucesso!");
-            return true;
+            return;
         }
         System.out.println("Tarefa com ID " + id + " não encontrada.");
-        return false;
     }
 
     public boolean concluirTarefa(int id) {
@@ -119,6 +115,17 @@ public class GerenciadorTarefas {
         if (tarefa != null) {
             tarefa.concluir();
             System.out.println("Tarefa '" + tarefa.getDescricao() + "' concluída!");
+            return true;
+        }
+        System.out.println("Tarefa com ID " + id + " não encontrada.");
+        return false;
+    }
+
+    public boolean cancelarTarefa(int id) {
+        Tarefa tarefa = buscarTarefaPorId(id);
+        if (tarefa != null) {
+            tarefa.cancelar();
+            System.out.println("Tarefa '" + tarefa.getDescricao() + "' cancelada!");
             return true;
         }
         System.out.println("Tarefa com ID " + id + " não encontrada.");
