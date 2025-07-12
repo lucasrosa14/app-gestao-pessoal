@@ -11,9 +11,12 @@ public class NormalizeTexto {
         // Remove acentos e caracteres diacríticos, depois converte para minúsculas
         // [\\p{InCombiningDiacriticalMarks}] é uma regex para caracteres diacríticos combinantes
         // .replaceAll("\\p{M}", "") remove esses caracteres
-        return Normalizer.normalize(text, Normalizer.Form.NFD)
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
                 .toLowerCase();
+
+        // Adicionar esta linha para remover múltiplos espaços e trim
+        return normalized.replaceAll("\\s+", " ").trim();
     }
 
 }
