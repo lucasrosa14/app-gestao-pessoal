@@ -57,6 +57,10 @@ public class Tarefa {
         return this.status == StatusTarefa.CONCLUIDA;
     }
 
+    public boolean isCancelada() {
+        return this.status == StatusTarefa.CANCELADA;
+    }
+
     public void setPrioridade(Prioridade novaPrioridade) {
         this.prioridade = novaPrioridade;
 

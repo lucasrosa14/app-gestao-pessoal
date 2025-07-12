@@ -5,11 +5,11 @@ import com.lucas.appgestaopessoal.util.IdGenerator;
 import com.lucas.appgestaopessoal.util.Prioridade;
 import com.lucas.appgestaopessoal.util.StatusTarefa;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -108,6 +108,19 @@ public class GerenciadorTarefasTest {
     }
 
     @Test
+    void naoDeveBuscarTarefaPorIdInexistente() {
+        // Arrange
+        gerenciadorTarefas.adicionarTarefa("Terminar relatório", LocalDate.now().plusDays(2), Prioridade.URGENTE);
+
+        // Act
+        Tarefa tarefaNaoEncontrada = gerenciadorTarefas.buscarTarefaPorId(99);
+
+        // Assert
+        assertNull(tarefaNaoEncontrada, "A tarefa não deve ser encontrada após busca por ID.");
+
+    }
+
+    @Test
     void deveBuscarTarefaPorTexto() {
         gerenciadorTarefas.adicionarTarefa("Terminar relatório", LocalDate.now().plusDays(2), Prioridade.URGENTE);
         gerenciadorTarefas.adicionarTarefa("Comprar comida", LocalDate.now().plusDays(1), Prioridade.BAIXA);
@@ -119,6 +132,20 @@ public class GerenciadorTarefasTest {
         assertEquals("Terminar relatório", tarefasEncontradas.getFirst().getDescricao(), "A descrição da tarefa é inválida.");
         assertEquals(LocalDate.now().plusDays(2), tarefasEncontradas.getFirst().getDataVencimento(), "A data de vencimento da tarefa é inválida.");
         assertEquals(Prioridade.URGENTE, tarefasEncontradas.getFirst().getPrioridade(), "A prioridade da tarefa é inválida.");
+
+
+    }
+
+    @Test
+    void naoDeveBuscarTarefaPorTextoInexistente() {
+        gerenciadorTarefas.adicionarTarefa("Terminar relatório", LocalDate.now().plusDays(2), Prioridade.URGENTE);
+        gerenciadorTarefas.adicionarTarefa("Comprar comida", LocalDate.now().plusDays(1), Prioridade.BAIXA);
+
+        List<Tarefa> tarefasEncontradas = gerenciadorTarefas.buscarTarefaPorTexto("estudar");
+
+        assertNotNull(tarefasEncontradas, "A lista de tarefas encontradas não deve ser nula.");
+        assertTrue(tarefasEncontradas.isEmpty(), "A lista de tarefas encontradas deve estar vazia quando o texto não existe.");
+        assertEquals(0, tarefasEncontradas.size(), "A lista de tarefas encontradas deve ter 0 elementos.");
 
 
     }
@@ -300,24 +327,132 @@ public class GerenciadorTarefasTest {
     }
 
     @Test
-    @Disabled
     void deveAtualizarDescricaoDaTarefa() {
+        Tarefa tarefaParaAtualizar = gerenciadorTarefas.adicionarTarefa("Terminar relatório", LocalDate.now().plusDays(2), Prioridade.URGENTE);
+
+        tarefaParaAtualizar.setDescricao("Terminar relatório atualizado.");
+        gerenciadorTarefas.atualizarTarefa(tarefaParaAtualizar);
+
+        Tarefa tarefaAtualizada = gerenciadorTarefas.buscarTarefaPorId(tarefaParaAtualizar.getId());
+        assertEquals(1, gerenciadorTarefas.listarTodasTarefas().size(), "Deve haver uma tarefa adicionada.");
+        assertNotNull(tarefaAtualizada, "A tarefa deve ser encontrada após atualizar a descrição.");
+        assertEquals("Terminar relatório atualizado.", tarefaAtualizada.getDescricao(), "A descrição da tarefa deve ser 'Terminar relatório atualizado.'.");
+        assertEquals(LocalDate.now().plusDays(2), tarefaAtualizada.getDataVencimento(), "A data de vencimento não deve mudar.");
+        assertEquals(Prioridade.URGENTE, tarefaAtualizada.getPrioridade(), "A prioridade não deve mudar.");
+        assertEquals(StatusTarefa.PENDENTE, tarefaAtualizada.getStatus(), "O status não deve mudar.");
     }
 
     @Test
-    @Disabled
     void deveAtualizarDataDeVencimentoDaTarefa() {
+        Tarefa tarefaParaAtualizar = gerenciadorTarefas.adicionarTarefa("Terminar relatório", LocalDate.now().plusDays(2), Prioridade.URGENTE);
+
+        tarefaParaAtualizar.setDataVencimento(LocalDate.now().plusDays(4));
+        gerenciadorTarefas.atualizarTarefa(tarefaParaAtualizar);
+
+        Tarefa tarefaAtualizada = gerenciadorTarefas.buscarTarefaPorId(tarefaParaAtualizar.getId());
+        assertEquals(1, gerenciadorTarefas.listarTodasTarefas().size(), "Deve haver uma tarefa adicionada.");
+        assertNotNull(tarefaAtualizada, "A tarefa deve ser encontrada após atualizar a data de vencimento.");
+        assertEquals("Terminar relatório", tarefaAtualizada.getDescricao(), "A descrição da tarefa não deve ser atualizada.");
+        assertEquals(LocalDate.now().plusDays(4), tarefaAtualizada.getDataVencimento(), "A data de vencimento deve ser '" + LocalDate.now().plusDays(4) +"'.");
+        assertEquals(Prioridade.URGENTE, tarefaAtualizada.getPrioridade(), "A prioridade não deve mudar.");
+        assertEquals(StatusTarefa.PENDENTE, tarefaAtualizada.getStatus(), "O status não deve mudar.");
     }
 
     @Test
-    @Disabled
     void deveAtualizarPrioridadeDaTarefa() {
+        Tarefa tarefaParaAtualizar = gerenciadorTarefas.adicionarTarefa("Terminar relatório", LocalDate.now().plusDays(2), Prioridade.URGENTE);
+
+        tarefaParaAtualizar.setPrioridade(Prioridade.BAIXA);
+        gerenciadorTarefas.atualizarTarefa(tarefaParaAtualizar);
+
+        Tarefa tarefaAtualizada = gerenciadorTarefas.buscarTarefaPorId(tarefaParaAtualizar.getId());
+        assertEquals(1, gerenciadorTarefas.listarTodasTarefas().size(), "Deve haver uma tarefa adicionada.");
+        assertNotNull(tarefaAtualizada, "A tarefa deve ser encontrada após atualizar a prioridade.");
+        assertEquals("Terminar relatório", tarefaAtualizada.getDescricao(), "A descrição da tarefa não deve ser atualizada.");
+        assertEquals(LocalDate.now().plusDays(2), tarefaAtualizada.getDataVencimento(), "A data de vencimento deve ser '" + LocalDate.now().plusDays(2) +"'.");
+        assertEquals(Prioridade.BAIXA, tarefaAtualizada.getPrioridade(), "A prioridade deve ser 'BAIXA' após atualização.");
+        assertEquals(StatusTarefa.PENDENTE, tarefaAtualizada.getStatus(), "O status não deve mudar.");
     }
 
     @Test
-    @Disabled
     void deveAtualizarStatusDaTarefa() {
+        Tarefa tarefaParaAtualizar = gerenciadorTarefas.adicionarTarefa("Terminar relatório", LocalDate.now().plusDays(2), Prioridade.URGENTE);
+
+        tarefaParaAtualizar.setStatus(StatusTarefa.CANCELADA);
+        gerenciadorTarefas.atualizarTarefa(tarefaParaAtualizar);
+
+        Tarefa tarefaAtualizada = gerenciadorTarefas.buscarTarefaPorId(tarefaParaAtualizar.getId());
+        assertEquals(1, gerenciadorTarefas.listarTodasTarefas().size(), "Deve haver uma tarefa adicionada.");
+        assertNotNull(tarefaAtualizada, "A tarefa deve ser encontrada após atualizar o status.");
+        assertEquals("Terminar relatório", tarefaAtualizada.getDescricao(), "A descrição da tarefa não deve ser atualizada.");
+        assertEquals(LocalDate.now().plusDays(2), tarefaAtualizada.getDataVencimento(), "A data de vencimento deve ser '" + LocalDate.now().plusDays(2) +"'.");
+        assertEquals(Prioridade.URGENTE, tarefaAtualizada.getPrioridade(), "A prioridade não deve mudar.");
+        assertEquals(StatusTarefa.CANCELADA, tarefaAtualizada.getStatus(), "O status deve ser 'CANCELADA' após atualização.");
     }
 
+    @Test
+    void deveSugerirTarefaPrioritariaCorretamenteComPrioridadesDiferentes() {
+        Tarefa tarefaAlta = new Tarefa(IdGenerator.generateNewId(), "Preparar apresentação", LocalDate.now().plusDays(5), Prioridade.ALTA, StatusTarefa.PENDENTE, LocalDate.now());
+        Tarefa tarefaMedia = new Tarefa(IdGenerator.generateNewId(), "Responder e-mails", LocalDate.now().plusDays(1), Prioridade.MEDIA, StatusTarefa.PENDENTE, LocalDate.now());
+        Tarefa tarefaBaixa = new Tarefa(IdGenerator.generateNewId(), "Organizar arquivos", LocalDate.now().plusDays(10), Prioridade.BAIXA, StatusTarefa.PENDENTE, LocalDate.now());
+        Tarefa tarefaUrgente = new Tarefa(IdGenerator.generateNewId(), "Revisar relatório final", LocalDate.now().plusDays(7), Prioridade.URGENTE, StatusTarefa.PENDENTE, LocalDate.now());
+
+        gerenciadorTarefas.adicionarTarefa(tarefaAlta);
+        gerenciadorTarefas.adicionarTarefa(tarefaMedia);
+        gerenciadorTarefas.adicionarTarefa(tarefaBaixa);
+        gerenciadorTarefas.adicionarTarefa(tarefaUrgente);
+
+        Optional<Tarefa> tarefaSugerida = gerenciadorTarefas.sugerirTarefaPrioritaria();
+
+        assertTrue(tarefaSugerida.isPresent(), "Deve haver uma tarefa sugerida.");
+        assertEquals(tarefaUrgente.getId(), tarefaSugerida.get().getId(), "A tarefa sugerida deve ser a URGENTE.");
+        assertEquals("Revisar relatório final", tarefaSugerida.get().getDescricao(), "A descrição da tarefa sugerida é incorreta.");
+    }
+
+    @Test
+    void deveSugerirTarefaPrioritariaCorretamenteComMesmaPrioridadeEDiferentesDatas() {
+        Tarefa tarefaBaixaAmanha = new Tarefa(IdGenerator.generateNewId(), "Verificar estoque", LocalDate.now().plusDays(1), Prioridade.BAIXA, StatusTarefa.PENDENTE, LocalDate.now());
+        Tarefa tarefaBaixa3Dias = new Tarefa(IdGenerator.generateNewId(), "Atualizar software", LocalDate.now().plusDays(3), Prioridade.BAIXA, StatusTarefa.PENDENTE, LocalDate.now());
+        Tarefa tarefaBaixaHoje = new Tarefa(IdGenerator.generateNewId(), "Limpar mesa", LocalDate.now(), Prioridade.BAIXA, StatusTarefa.PENDENTE, LocalDate.now());
+
+        gerenciadorTarefas.adicionarTarefa(tarefaBaixa3Dias);
+        gerenciadorTarefas.adicionarTarefa(tarefaBaixaAmanha);
+        gerenciadorTarefas.adicionarTarefa(tarefaBaixaHoje);
+
+        Optional<Tarefa> tarefaSugerida = gerenciadorTarefas.sugerirTarefaPrioritaria();
+
+        assertTrue(tarefaSugerida.isPresent(), "Deve haver uma tarefa sugerida.");
+        assertEquals(tarefaBaixaHoje.getId(), tarefaSugerida.get().getId(), "A tarefa sugerida deve ser a BAIXA que vence hoje.");
+        assertEquals("Limpar mesa", tarefaSugerida.get().getDescricao(), "A descrição da tarefa sugerida é incorreta.");
+    }
+
+    @Test
+    void deveRetornarOptionalVazioSeNaoHouverTarefas() {
+
+        Optional<Tarefa> tarefaSugerida = gerenciadorTarefas.sugerirTarefaPrioritaria();
+
+        assertFalse(tarefaSugerida.isPresent(), "Não deve haver tarefa sugerida se a lista estiver vazia.");
+    }
+
+    @Test
+    void deveRetornarOptionalVazioSeTodasAsTarefasEstiveremConcluidas() {
+
+        Tarefa tarefaConcluida = gerenciadorTarefas.adicionarTarefa("Comprar café", LocalDate.now(), Prioridade.BAIXA);
+        gerenciadorTarefas.concluirTarefa(tarefaConcluida.getId());
+
+        Optional<Tarefa> tarefaSugerida = gerenciadorTarefas.sugerirTarefaPrioritaria();
+
+        assertFalse(tarefaSugerida.isPresent(), "Não deve haver tarefa sugerida se todas estiverem concluídas.");
+    }
+
+    @Test
+    void deveRetornarOptionalVazioSeTodasAsTarefasEstiveremCanceladas() {
+        Tarefa tarefaCancelada = gerenciadorTarefas.adicionarTarefa("Comprar café", LocalDate.now(), Prioridade.BAIXA);
+        gerenciadorTarefas.cancelarTarefa(tarefaCancelada.getId()); // Marca como cancelada
+
+        Optional<Tarefa> tarefaSugerida = gerenciadorTarefas.sugerirTarefaPrioritaria();
+
+        assertFalse(tarefaSugerida.isPresent(), "Não deve haver tarefa sugerida se todas estiverem canceladas.");
+    }
 
 }

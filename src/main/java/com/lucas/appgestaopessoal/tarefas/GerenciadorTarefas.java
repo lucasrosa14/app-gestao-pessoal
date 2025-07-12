@@ -171,7 +171,7 @@ public class GerenciadorTarefas {
         List<Tarefa> tarefasPendentes = new ArrayList<>();
 
         for (Tarefa tarefa : this.tarefas) {
-            if (!tarefa.isConcluido()) {
+            if (! tarefa.isConcluido() && ! tarefa.isCancelada()) {
                 tarefasPendentes.add(tarefa);
             }
         }
