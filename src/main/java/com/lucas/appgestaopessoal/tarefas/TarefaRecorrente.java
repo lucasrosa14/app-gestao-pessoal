@@ -34,12 +34,12 @@ public class TarefaRecorrente extends Tarefa {
         return switch (freq) {
             case DIARIA -> dataBase.plusDays(1);
             case SEMANAL -> dataBase.plusWeeks(1);
-            case QUINZENAL -> dataBase.plusWeeks(2); // Consistente: Duas semanas
+            case QUINZENAL -> dataBase.plusDays(15); // Consistente: Duas semanas
             case MENSAL -> dataBase.plusMonths(1);
             case ANUAL -> dataBase.plusYears(1);
         };
     }
-    
+
     // GETTERS
     public LocalDate getPrimeiraOcorrencia() {
         return dataPrimeiraOcorrencia;
@@ -97,49 +97,87 @@ public class TarefaRecorrente extends Tarefa {
         calcularProximaOcorrencia();
     }
 
-    private void calcularProximaOcorrencia() {
+    @Override
+    public void cancelar() {
+        // Se a tarefa já está CONCLUIDA (finalizada a recorrência), não faz nada.
+        if (getStatus() == StatusTarefa.CONCLUIDA && this.proximaOcorrencia == null) {
+            return;
+        }
+
+        // Se já está CANCELADA (ocorrencia atual) ou PENDENTE, avança para a próxima ocorrência.
+        // A lógica é similar a `concluir()`, mas define o status como CANCELADA para a ocorrência atual
+        // e PENDENTE para a próxima (se válida).
+
         LocalDate hoje = LocalDate.now();
 
-
-        LocalDate dataParaCalcular = dataInicioRecorrencia != null ? dataInicioRecorrencia : dataPrimeiraOcorrencia;
-
-
-        if (dataParaCalcular.isBefore(hoje)) {
-            dataParaCalcular = hoje;
+        // Se não há proximaOcorrencia (já terminou), marca como CONCLUIDA e sai
+        if (this.proximaOcorrencia == null) {
+            super.cancelar(); // Mantém o status CANCELADA ou TRANSICIONA para CONCLUIDA se não há mais
+            return;
         }
 
-        LocalDate proximaOcorrenciaEncontrada = null;
+        // Calcula a próxima ocorrência avançando a partir da atual
+        LocalDate novaProximaOcorrencia = avancarDataPorFrequencia(this.proximaOcorrencia, frequencia);
+
+        // Avança até que a novaProximaOcorrencia seja HOJE ou no FUTURO
+        while (novaProximaOcorrencia.isBefore(hoje)) {
+            if (dataFimRecorrencia != null && novaProximaOcorrencia.isAfter(dataFimRecorrencia)) {
+                this.proximaOcorrencia = null;
+                super.setDataVencimento(null);
+                super.setStatus(StatusTarefa.CONCLUIDA); // Finaliza a recorrência
+                return;
+            }
+            novaProximaOcorrencia = avancarDataPorFrequencia(novaProximaOcorrencia, frequencia);
+        }
+
+        // Verifica se a nova ocorrência calculada ultrapassa a data de fim
+        if (dataFimRecorrencia != null && novaProximaOcorrencia.isAfter(dataFimRecorrencia)) {
+            this.proximaOcorrencia = null;
+            super.setDataVencimento(null);
+            super.setStatus(StatusTarefa.CONCLUIDA); // A recorrência realmente terminou
+        } else {
+            // Se encontrou uma próxima ocorrência válida
+            this.proximaOcorrencia = novaProximaOcorrencia;
+            super.setDataVencimento(this.proximaOcorrencia);
+            super.setStatus(StatusTarefa.PENDENTE); // A tarefa volta a ser PENDENTE para a nova ocorrência
+        }
+    }
+
+
+    // Lógica principal de cálculo da próxima ocorrência
+    private void calcularProximaOcorrencia() {
+        // Se a tarefa foi explicitamente marcada como CANCELADA (permanente)
+        // ou CONCLUIDA (finalizada), não deve recalcular para uma nova data ativa.
+        // Esta é a diferença: se `cancelar()` agora AVANÇA, o `setStatus(CANCELADA)`
+        // não deve simplesmente zerar tudo, mas avançar a instância atual.
+        // Se você quer um "cancelamento permanente", precisaria de outro método.
+
+        LocalDate hoje = LocalDate.now();
         LocalDate tempDate = dataPrimeiraOcorrencia;
 
-
-        while (proximaOcorrenciaEncontrada == null) {
-
-            if (dataFimRecorrencia != null && tempDate.isAfter(dataFimRecorrencia)) {
-                break;
-            }
-
-            if (!tempDate.isBefore(hoje)) {
-                proximaOcorrenciaEncontrada = tempDate;
-                break;
-            }
-
-            tempDate = switch (frequencia) {
-                case DIARIA -> tempDate.plusDays(1);
-                case SEMANAL -> tempDate.plusWeeks(1);
-                case QUINZENAL -> tempDate.plusDays(15);
-                case MENSAL -> tempDate.plusMonths(1);
-                case ANUAL -> tempDate.plusYears(1);
-            };
+        if (dataInicioRecorrencia != null && dataInicioRecorrencia.isAfter(tempDate)) {
+            tempDate = dataInicioRecorrencia;
         }
 
-
-        super.setDataVencimento(proximaOcorrenciaEncontrada);
-
-
-        if (getStatus() != StatusTarefa.CANCELADA) {
-            if (proximaOcorrenciaEncontrada == null) {
+        while (tempDate.isBefore(hoje)) {
+            if (dataFimRecorrencia != null && tempDate.isAfter(dataFimRecorrencia)) {
+                this.proximaOcorrencia = null;
+                super.setDataVencimento(null);
                 super.setStatus(StatusTarefa.CONCLUIDA);
-            } else {
+                return;
+            }
+            tempDate = avancarDataPorFrequencia(tempDate, frequencia);
+        }
+
+        if (dataFimRecorrencia != null && tempDate.isAfter(dataFimRecorrencia)) {
+            this.proximaOcorrencia = null;
+            super.setDataVencimento(null);
+            super.setStatus(StatusTarefa.CONCLUIDA);
+        } else {
+            this.proximaOcorrencia = tempDate;
+            super.setDataVencimento(tempDate);
+            // O status é PENDENTE, a menos que tenha sido explicitamente CANCELADA ou CONCLUIDA por outro motivo
+            if (getStatus() != StatusTarefa.CANCELADA && getStatus() != StatusTarefa.CONCLUIDA) {
                 super.setStatus(StatusTarefa.PENDENTE);
             }
         }
@@ -160,7 +198,7 @@ public class TarefaRecorrente extends Tarefa {
         proximaOcorrenciaCalculada = switch (frequencia) {
             case DIARIA -> proximaOcorrenciaCalculada.plusDays(1);
             case SEMANAL -> proximaOcorrenciaCalculada.plusWeeks(1);
-            case QUINZENAL -> proximaOcorrenciaCalculada.plusWeeks(2);
+            case QUINZENAL -> proximaOcorrenciaCalculada.plusDays(15);
             case MENSAL -> proximaOcorrenciaCalculada.plusMonths(1);
             case ANUAL -> proximaOcorrenciaCalculada.plusYears(1);
         };
@@ -178,7 +216,7 @@ public class TarefaRecorrente extends Tarefa {
             proximaOcorrenciaCalculada = switch (frequencia) {
                 case DIARIA -> proximaOcorrenciaCalculada.plusDays(1);
                 case SEMANAL -> proximaOcorrenciaCalculada.plusWeeks(1);
-                case QUINZENAL -> proximaOcorrenciaCalculada.plusWeeks(2);
+                case QUINZENAL -> proximaOcorrenciaCalculada.plusDays(15);
                 case MENSAL -> proximaOcorrenciaCalculada.plusMonths(1);
                 case ANUAL -> proximaOcorrenciaCalculada.plusYears(1);
             };
