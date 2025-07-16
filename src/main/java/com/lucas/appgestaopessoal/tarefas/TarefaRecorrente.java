@@ -1,10 +1,13 @@
 package com.lucas.appgestaopessoal.tarefas;
 
 import com.lucas.appgestaopessoal.util.FrequenciaRecorrencia;
+import com.lucas.appgestaopessoal.util.IdGenerator;
 import com.lucas.appgestaopessoal.util.Prioridade;
 import com.lucas.appgestaopessoal.util.StatusTarefa;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import static com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATTER;
 
@@ -97,6 +100,10 @@ public class TarefaRecorrente extends Tarefa {
         calcularProximaOcorrencia();
     }
 
+    public void setProximaOcorrencia(LocalDate proximaOcorrencia) {
+        this.proximaOcorrencia = proximaOcorrencia;
+    }
+
     @Override
     public void cancelar() {
         // Se a tarefa já está CONCLUIDA (finalizada a recorrência), não faz nada.
@@ -142,7 +149,6 @@ public class TarefaRecorrente extends Tarefa {
             super.setStatus(StatusTarefa.PENDENTE); // A tarefa volta a ser PENDENTE para a nova ocorrência
         }
     }
-
 
     // Lógica principal de cálculo da próxima ocorrência
     private void calcularProximaOcorrencia() {
@@ -243,6 +249,52 @@ public class TarefaRecorrente extends Tarefa {
         this.setStatus(StatusTarefa.PENDENTE); // Marca como não concluída para a nova ocorrência
     }
 
+    public void concluirComRegistro(List<Tarefa> listaTarefas) {
+        if (this.proximaOcorrencia != null) {
+            this.setStatus(StatusTarefa.CONCLUIDA);
+        }
+
+        this.gerarProximaOcorrencia().ifPresent(listaTarefas::add);
+    }
+
+    public Optional<TarefaRecorrente> gerarProximaOcorrencia() {
+        LocalDate proximaData = switch (frequencia) {
+            case DIARIA -> this.getDataVencimento().plusDays(1);
+            case SEMANAL -> this.getDataVencimento().plusWeeks(1);
+            case QUINZENAL -> this.getDataVencimento().plusDays(15);
+            case MENSAL -> this.getDataVencimento().plusMonths(1);
+            case ANUAL -> this.getDataVencimento().plusYears(1);
+        };
+
+        if (dataFimRecorrencia != null && proximaData.isAfter(dataFimRecorrencia)) {
+            return Optional.empty();
+        }
+
+        int novoId = IdGenerator.generateNewId(); // ✅ gera aqui
+
+        TarefaRecorrente novaOcorrencia = new TarefaRecorrente(
+                novoId, // ✅ já com ID certo
+                this.getDescricao(),
+                this.dataPrimeiraOcorrencia,
+                this.getPrioridade(),
+                this.frequencia,
+                this.dataInicioRecorrencia,
+                this.dataFimRecorrencia
+        );
+        novaOcorrencia.setDataVencimento(proximaData);
+        novaOcorrencia.setProximaOcorrencia(proximaData);
+
+        return Optional.of(novaOcorrencia);
+    }
+
+    public void cancelarComRegistro(List<Tarefa> listaTarefas) {
+        // 1. Atualiza a tarefa atual (this) para CANCELADA
+        this.setStatus(StatusTarefa.CANCELADA);
+
+        // 2. Gera e adiciona a nova ocorrência, se possível
+        this.gerarProximaOcorrencia().ifPresent(listaTarefas::add);
+    }
+
     @Override
     public String toString() {
         // Usa o StringBuilder para construir a string de forma eficiente
@@ -263,9 +315,13 @@ public class TarefaRecorrente extends Tarefa {
             // Se getDataVencimento for null, significa que não há mais ocorrências
             sb.append(", Próxima Ocorrência: FINALIZADA");
         }
+        sb.append(" (Recorrente)");
         sb.append(", Cadastrada em: ").append(getDataCriacao().format(DATE_FORMATTER));
 
 
         return sb.toString();
     }
+
+
+
 }
