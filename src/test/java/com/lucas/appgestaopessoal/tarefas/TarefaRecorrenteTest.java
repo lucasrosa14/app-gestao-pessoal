@@ -391,7 +391,7 @@ public class TarefaRecorrenteTest {
         // Se ela for concluída, avança para 09/08.
         // O toString deve refletir o estado atual da tarefa.
         String expectedString = String.format(
-                "ID: %d, Descrição: Projeto A, Prioridade: ALTA, Status: PENDENTE, Frequência: MENSAL, Início Recorrência: %s, Primeira Ocorrência: %s, Fim Recorrência: %s, Próxima Ocorrência: %s, Cadastrada em: %s",
+                "ID: %d, Descrição: Projeto A, Prioridade: ALTA, Status: PENDENTE, Frequência: MENSAL, Início Recorrência: %s, Primeira Ocorrência: %s, Fim Recorrência: %s, Próxima Ocorrência: %s (Recorrente), Cadastrada em: %s",
                 tarefa.getId(),
                 dataInicio.format(com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATTER),
                 dataPrimeira.format(com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATTER),
@@ -422,7 +422,7 @@ public class TarefaRecorrenteTest {
         assertEquals(StatusTarefa.CONCLUIDA, tarefa.getStatus());
 
         String expectedString = String.format(
-                "ID: %d, Descrição: Tarefa Já Finalizada, Prioridade: BAIXA, Status: CONCLUIDA, Frequência: DIARIA, Início Recorrência: %s, Primeira Ocorrência: %s, Fim Recorrência: %s, Próxima Ocorrência: FINALIZADA, Cadastrada em: %s",
+                "ID: %d, Descrição: Tarefa Já Finalizada, Prioridade: BAIXA, Status: CONCLUIDA, Frequência: DIARIA, Início Recorrência: %s, Primeira Ocorrência: %s, Fim Recorrência: %s, Próxima Ocorrência: FINALIZADA (Recorrente), Cadastrada em: %s",
                 tarefa.getId(),
                 dataPrimeira.format(com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATTER),
                 dataPrimeira.format(com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATTER),
