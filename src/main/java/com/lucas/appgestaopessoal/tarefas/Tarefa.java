@@ -1,5 +1,6 @@
 package com.lucas.appgestaopessoal.tarefas;
 
+import com.lucas.appgestaopessoal.util.IdGenerator;
 import com.lucas.appgestaopessoal.util.Prioridade;
 import com.lucas.appgestaopessoal.util.StatusTarefa;
 
@@ -9,7 +10,7 @@ import static com.lucas.appgestaopessoal.util.DateTimeFormatterUtil.DATE_FORMATT
 
 public class Tarefa {
 
-    private final int id;
+    private int id;
     private String descricao;
     private LocalDate dataVencimento;
     private Prioridade prioridade;
@@ -104,5 +105,9 @@ public class Tarefa {
 
         return sb.toString();
 
+    }
+
+    public void setId() {
+        this.id = IdGenerator.generateNewId();
     }
 }
