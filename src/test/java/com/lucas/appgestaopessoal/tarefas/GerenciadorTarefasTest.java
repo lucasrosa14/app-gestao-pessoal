@@ -129,9 +129,9 @@ public class GerenciadorTarefasTest {
 
         assertNotNull(tarefasEncontradas, "A tarefa deve ser encontrada após busca por texto.");
         assertEquals(1, tarefasEncontradas.size(), "Deve haver uma tarefa adicionada.");
-        assertEquals("Terminar relatório", tarefasEncontradas.getFirst().getDescricao(), "A descrição da tarefa é inválida.");
-        assertEquals(LocalDate.now().plusDays(2), tarefasEncontradas.getFirst().getDataVencimento(), "A data de vencimento da tarefa é inválida.");
-        assertEquals(Prioridade.URGENTE, tarefasEncontradas.getFirst().getPrioridade(), "A prioridade da tarefa é inválida.");
+        assertEquals("Terminar relatório", tarefasEncontradas.get(0).getDescricao(), "A descrição da tarefa é inválida.");
+        assertEquals(LocalDate.now().plusDays(2), tarefasEncontradas.get(0).getDataVencimento(), "A data de vencimento da tarefa é inválida.");
+        assertEquals(Prioridade.URGENTE, tarefasEncontradas.get(0).getPrioridade(), "A prioridade da tarefa é inválida.");
 
 
     }
@@ -320,8 +320,8 @@ public class GerenciadorTarefasTest {
 
 
         }
-        assertEquals(Prioridade.URGENTE, tarefasPorPrioridade.getFirst().getPrioridade(), "A última tarefa deve ter prioridade URGENTE.");
-        assertEquals(Prioridade.BAIXA, tarefasPorPrioridade.getLast().getPrioridade(), "A primeira tarefa deve ter prioridade BAIXA.");
+        assertEquals(Prioridade.URGENTE, tarefasPorPrioridade.get(0).getPrioridade(), "A última tarefa deve ter prioridade URGENTE.");
+        assertEquals(Prioridade.BAIXA, tarefasPorPrioridade.get(tarefasPorPrioridade.size() - 1).getPrioridade(), "A primeira tarefa deve ter prioridade BAIXA.");
 
 
     }
